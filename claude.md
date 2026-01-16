@@ -45,7 +45,9 @@ Provided functions are:
 - Calculate relief
 - Return the number of tax brackets
 - Return tax bracket range and rate
+- Calculate the (taxed) ammount in a given bracket
 - Calculate income tax in a given bracket
+- Calculate net income in a given bracket
 - Calculate total income tax
 - Calculate employer tax
 

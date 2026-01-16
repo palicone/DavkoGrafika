@@ -416,7 +416,17 @@ body {
 /* Employer tax section */
 .fg-employer-tax {
     background-color: #1f1f1f;
-    border-top: 2px dashed var(--color-border);
+    border-bottom: 2px dashed var(--color-border);
+}
+
+/* Employer tax grid (above handle) */
+.employer-tax-grid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    pointer-events: none;
 }
 
 /* Income handle */

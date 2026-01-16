@@ -30,6 +30,7 @@
         netPortion: null,
         backgroundGrid: null,
         foregroundGrid: null,
+        employerTaxGrid: null,
         incomeHandle: null,
         handleAmount: null,
         gridContainer: null
@@ -102,6 +103,7 @@
         elements.netPortion = document.getElementById('netPortion');
         elements.backgroundGrid = document.getElementById('backgroundGrid');
         elements.foregroundGrid = document.getElementById('foregroundGrid');
+        elements.employerTaxGrid = document.getElementById('employerTaxGrid');
         elements.incomeHandle = document.getElementById('incomeHandle');
         elements.handleAmount = document.getElementById('handleAmount');
         elements.gridContainer = document.getElementById('gridContainer');
@@ -281,6 +283,13 @@
 
     /**
      * Render foreground grid (current income breakdown)
+     *
+     * Structure from bottom to top:
+     * 1. Tax brackets (taxed income split into tax/net)
+     * 2. Relief (green - untaxed)
+     * 3. Contributions (dark gray - deducted from gross)
+     * -- Handle sits here at gross income level --
+     * 4. Employer tax (above handle, if enabled) - rendered separately
      */
     function renderForegroundGrid() {
         const breakdown = state.taxModule.getFullBreakdown(
@@ -292,43 +301,10 @@
         const maxIncome = state.maxIncome;
         const gridHeight = elements.gridContainer.offsetHeight;
 
-        let html = '';
-        let currentHeight = 0;
+        // Build sections array from bottom to top (below handle)
+        const sections = [];
 
-        // Calculate heights
-        const contributionsHeight = (breakdown.contributions / maxIncome) * 100;
-        const reliefHeight = (breakdown.relief / maxIncome) * 100;
-
-        // Contributions section
-        const contribPx = (contributionsHeight / 100) * gridHeight;
-        const contribSize = contribPx < 30 ? 'tiny' : contribPx < 60 ? 'small' : 'normal';
-
-        html += `
-            <div class="fg-section" style="height: ${contributionsHeight}%;" data-height="${contribSize}">
-                <div class="fg-section-full fg-contributions">
-                    <span class="fg-section-label">Prispevki</span>
-                    <span class="fg-section-amount">${formatEuro(breakdown.contributions)}</span>
-                    <span class="fg-section-percent">${formatPercent((breakdown.contributions / breakdown.grossIncome) * 100)}</span>
-                </div>
-            </div>
-        `;
-        currentHeight += contributionsHeight;
-
-        // Relief section
-        const reliefPx = (reliefHeight / 100) * gridHeight;
-        const reliefSize = reliefPx < 30 ? 'tiny' : reliefPx < 60 ? 'small' : 'normal';
-
-        html += `
-            <div class="fg-section" style="height: ${reliefHeight}%;" data-height="${reliefSize}">
-                <div class="fg-section-full fg-relief">
-                    <span class="fg-section-label">Olajsave</span>
-                    <span class="fg-section-amount">${formatEuro(breakdown.relief)}</span>
-                </div>
-            </div>
-        `;
-        currentHeight += reliefHeight;
-
-        // Tax brackets
+        // 1. Tax brackets (from lowest to highest)
         const brackets = state.taxModule.getAllBrackets(state.isMonthly);
 
         for (let i = 0; i < brackets.length; i++) {
@@ -339,48 +315,122 @@
             if (breakdown.taxedIncome <= bracket.min) continue;
 
             const incomeInBracket = Math.min(breakdown.taxedIncome, bracket.max) - bracket.min;
-            const bracketHeight = (incomeInBracket / maxIncome) * 100;
             const netInBracket = incomeInBracket - bracketTax;
 
-            // Tax and net widths based on bracket rate
-            const taxWidth = bracket.rate * 100;
-            const netWidth = 100 - taxWidth;
-
-            const bracketPx = (bracketHeight / 100) * gridHeight;
-            const bracketSize = bracketPx < 30 ? 'tiny' : bracketPx < 60 ? 'small' : 'normal';
-
-            html += `
-                <div class="fg-bracket" style="height: ${bracketHeight}%;" data-height="${bracketSize}">
-                    <div class="fg-bracket-tax" style="width: ${taxWidth}%;">
-                        <span class="fg-section-amount">${formatEuro(bracketTax)}</span>
-                        <span class="fg-section-percent">${Math.round(bracket.rate * 100)}%</span>
-                    </div>
-                    <div class="fg-bracket-net" style="width: ${netWidth}%;">
-                        <span class="fg-section-amount">${formatEuro(netInBracket)}</span>
-                    </div>
-                </div>
-            `;
-            currentHeight += bracketHeight;
+            sections.push({
+                type: 'bracket',
+                height: incomeInBracket,
+                tax: bracketTax,
+                net: netInBracket,
+                rate: bracket.rate
+            });
         }
 
-        // Employer tax section (if enabled)
-        if (state.showEmployerTax && breakdown.employerTax > 0) {
-            const employerTaxHeight = (breakdown.employerTax / maxIncome) * 100;
-            const employerPx = (employerTaxHeight / 100) * gridHeight;
-            const employerSize = employerPx < 30 ? 'tiny' : employerPx < 60 ? 'small' : 'normal';
+        // 2. Relief (sits above taxed income)
+        if (breakdown.relief > 0) {
+            sections.push({
+                type: 'relief',
+                height: breakdown.relief,
+                amount: breakdown.relief
+            });
+        }
 
-            html += `
-                <div class="fg-section" style="height: ${employerTaxHeight}%;" data-height="${employerSize}">
-                    <div class="fg-section-full fg-contributions fg-employer-tax">
-                        <span class="fg-section-label">Davek delodajalca</span>
-                        <span class="fg-section-amount">${formatEuro(breakdown.employerTax)}</span>
-                        <span class="fg-section-percent">${formatPercent(state.taxModule.EMPLOYER_TAX_RATE * 100)}</span>
+        // 3. Contributions (sits below gross income / at handle level)
+        if (breakdown.contributions > 0) {
+            sections.push({
+                type: 'contributions',
+                height: breakdown.contributions,
+                amount: breakdown.contributions,
+                percent: breakdown.grossIncome > 0 ? (breakdown.contributions / breakdown.grossIncome) * 100 : 0
+            });
+        }
+
+        // Calculate total height of foreground (should equal grossIncome)
+        const totalForegroundHeight = sections.reduce((sum, s) => sum + s.height, 0);
+        const foregroundHeightPercent = (state.grossIncome / maxIncome) * 100;
+
+        // Set the foreground grid height so child percentage heights work
+        elements.foregroundGrid.style.height = `${foregroundHeightPercent}%`;
+
+        // Render sections below handle
+        let html = '';
+
+        for (const section of sections) {
+            // Height relative to grossIncome (the foreground container height)
+            const heightPercent = (section.height / state.grossIncome) * 100;
+            const heightPx = (foregroundHeightPercent / 100) * gridHeight * (heightPercent / 100);
+            const sizeClass = heightPx < 30 ? 'tiny' : heightPx < 60 ? 'small' : 'normal';
+
+            if (section.type === 'bracket') {
+                const taxWidth = section.rate * 100;
+                const netWidth = 100 - taxWidth;
+
+                html += `
+                    <div class="fg-bracket" style="height: ${heightPercent}%;" data-height="${sizeClass}">
+                        <div class="fg-bracket-tax" style="width: ${taxWidth}%;">
+                            <span class="fg-section-amount">${formatEuro(section.tax)}</span>
+                            <span class="fg-section-percent">${Math.round(section.rate * 100)}%</span>
+                        </div>
+                        <div class="fg-bracket-net" style="width: ${netWidth}%;">
+                            <span class="fg-section-amount">${formatEuro(section.net)}</span>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else if (section.type === 'relief') {
+                html += `
+                    <div class="fg-section" style="height: ${heightPercent}%;" data-height="${sizeClass}">
+                        <div class="fg-section-full fg-relief">
+                            <span class="fg-section-label">Olajsave</span>
+                            <span class="fg-section-amount">${formatEuro(section.amount)}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (section.type === 'contributions') {
+                html += `
+                    <div class="fg-section" style="height: ${heightPercent}%;" data-height="${sizeClass}">
+                        <div class="fg-section-full fg-contributions">
+                            <span class="fg-section-label">Prispevki</span>
+                            <span class="fg-section-amount">${formatEuro(section.amount)}</span>
+                            <span class="fg-section-percent">${formatPercent(section.percent)}</span>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         elements.foregroundGrid.innerHTML = html;
+
+        // Render employer tax above handle (separate grid)
+        renderEmployerTaxGrid(breakdown, maxIncome, gridHeight);
+    }
+
+    /**
+     * Render employer tax grid (above handle)
+     */
+    function renderEmployerTaxGrid(breakdown, maxIncome, gridHeight) {
+        if (!state.showEmployerTax || breakdown.employerTax <= 0) {
+            elements.employerTaxGrid.innerHTML = '';
+            elements.employerTaxGrid.style.bottom = '';
+            return;
+        }
+
+        const handlePosition = (state.grossIncome / maxIncome) * 100;
+        const employerTaxHeight = (breakdown.employerTax / maxIncome) * 100;
+        const heightPx = (employerTaxHeight / 100) * gridHeight;
+        const sizeClass = heightPx < 30 ? 'tiny' : heightPx < 60 ? 'small' : 'normal';
+
+        // Position employer tax grid to start at handle level
+        elements.employerTaxGrid.style.bottom = `${handlePosition}%`;
+
+        elements.employerTaxGrid.innerHTML = `
+            <div class="fg-section" style="height: ${employerTaxHeight}%;" data-height="${sizeClass}">
+                <div class="fg-section-full fg-contributions fg-employer-tax">
+                    <span class="fg-section-label">Davek delodajalca</span>
+                    <span class="fg-section-amount">${formatEuro(breakdown.employerTax)}</span>
+                    <span class="fg-section-percent">${formatPercent(state.taxModule.EMPLOYER_TAX_RATE * 100)}</span>
+                </div>
+            </div>
+        `;
     }
 
     /**
