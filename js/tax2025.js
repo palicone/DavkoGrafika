@@ -69,6 +69,7 @@ const Tax2025 = (function() {
 
     /**
      * Calculate relief (olajsava)
+     * Relief cannot exceed gross income minus contributions
      * @param {number} grossIncome - Gross income
      * @param {boolean} isMonthly - Whether calculation is monthly
      * @returns {number} Relief amount
@@ -76,12 +77,18 @@ const Tax2025 = (function() {
     function calculateRelief(grossIncome, isMonthly) {
         const relief = isMonthly ? RELIEF_MONTHLY : RELIEF_YEARLY;
 
+        let reliefAmount;
         if (grossIncome <= relief.threshold) {
             const additionalRelief = relief.additionalBase - (relief.multiplier * grossIncome);
-            return relief.baseAmount + Math.max(0, additionalRelief);
+            reliefAmount = relief.baseAmount + Math.max(0, additionalRelief);
         } else {
-            return relief.baseAmount;
+            reliefAmount = relief.baseAmount;
         }
+
+        // Relief cannot exceed gross income minus contributions
+        const contributions = calculateContributions(grossIncome, isMonthly);
+        const maxRelief = Math.max(0, grossIncome - contributions);
+        return Math.min(reliefAmount, maxRelief);
     }
 
     /**

@@ -85,32 +85,39 @@ describe('Tax2025 Relief (calculateRelief)', () => {
     // Yearly thresholds
     const YEARLY_THRESHOLD = 16832.00;
     const YEARLY_BASE = 5260.00;
-    const YEARLY_ADDITIONAL_BASE = 19736.99;
-    const MULTIPLIER = 1.17259;
+    const CONTRIBUTION_RATE = 0.231;
+    const FIXED_YEARLY_CONTRIBUTION = 37.17 * 12; // 446.04
 
-    test('yearly relief at 0 EUR (below threshold)', () => {
+    test('yearly relief at 0 EUR is capped at 0 (gross - contributions is negative)', () => {
         const result = Tax2025.calculateRelief(0, false);
-        const expected = YEARLY_BASE + YEARLY_ADDITIONAL_BASE; // 24996.99
-        assert.strictEqual(round2(result), round2(expected));
+        // At 0 gross, contributions = 446.04, so max relief = 0
+        assert.strictEqual(round2(result), 0);
     });
 
-    test('yearly relief at 10000 EUR (below threshold)', () => {
-        const result = Tax2025.calculateRelief(10000, false);
-        const additional = YEARLY_ADDITIONAL_BASE - MULTIPLIER * 10000;
-        const expected = YEARLY_BASE + additional; // 5260 + (19736.99 - 11725.9) = 13271.09
-        assert.strictEqual(round2(result), round2(expected));
+    test('yearly relief at 1000 EUR is capped at gross - contributions', () => {
+        const result = Tax2025.calculateRelief(1000, false);
+        // contributions = 1000 * 0.231 + 446.04 = 677.04
+        // max relief = 1000 - 677.04 = 322.96
+        const contributions = 1000 * CONTRIBUTION_RATE + FIXED_YEARLY_CONTRIBUTION;
+        const maxRelief = 1000 - contributions;
+        assert.strictEqual(round2(result), round2(maxRelief));
     });
 
     test('yearly relief at threshold (16832 EUR)', () => {
         const result = Tax2025.calculateRelief(YEARLY_THRESHOLD, false);
-        // At threshold, additional relief should be ~0
-        const expected = YEARLY_BASE;
-        assert.strictEqual(round2(result), round2(expected));
+        // At threshold, formula relief = base (5260)
+        // contributions = 16832 * 0.231 + 446.04 = 4334.23
+        // max relief = 16832 - 4334.23 = 12497.77
+        // Since 5260 < 12497.77, relief = 5260
+        assert.strictEqual(round2(result), round2(YEARLY_BASE));
     });
 
     test('yearly relief above threshold (48000 EUR)', () => {
         const result = Tax2025.calculateRelief(48000, false);
-        assert.strictEqual(round2(result), round2(YEARLY_BASE)); // 5260.00
+        // contributions = 48000 * 0.231 + 446.04 = 11534.04
+        // max relief = 48000 - 11534.04 = 36465.96
+        // Since 5260 < 36465.96, relief = 5260
+        assert.strictEqual(round2(result), round2(YEARLY_BASE));
     });
 
     test('yearly relief at 100000 EUR', () => {
@@ -119,18 +126,19 @@ describe('Tax2025 Relief (calculateRelief)', () => {
     });
 
     // Monthly thresholds
-    const MONTHLY_THRESHOLD = 1402.67;
     const MONTHLY_BASE = 438.33;
-    const MONTHLY_ADDITIONAL_BASE = 1644.75;
 
-    test('monthly relief at 0 EUR', () => {
+    test('monthly relief at 0 EUR is capped at 0', () => {
         const result = Tax2025.calculateRelief(0, true);
-        const expected = MONTHLY_BASE + MONTHLY_ADDITIONAL_BASE;
-        assert.strictEqual(round2(result), round2(expected));
+        // At 0 gross, contributions = 37.17, so max relief = 0
+        assert.strictEqual(round2(result), 0);
     });
 
     test('monthly relief above threshold (4000 EUR)', () => {
         const result = Tax2025.calculateRelief(4000, true);
+        // contributions = 4000 * 0.231 + 37.17 = 961.17
+        // max relief = 4000 - 961.17 = 3038.83
+        // Since 438.33 < 3038.83, relief = 438.33
         assert.strictEqual(round2(result), round2(MONTHLY_BASE));
     });
 });

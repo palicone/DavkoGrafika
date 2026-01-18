@@ -268,7 +268,7 @@
             const taxWidth = bracket.rate * 100;
             const netWidth = 100 - taxWidth;
 
-            const limitText = bracket.max === Infinity ? 'max' : formatEuro(bracket.max);
+            const limitText = bracket.max === Infinity ? formatEuro(maxIncome) : formatEuro(bracket.max);
             const rateText = Math.round(bracket.rate * 100) + '%';
 
             html += `
