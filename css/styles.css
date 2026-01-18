@@ -291,10 +291,10 @@ body {
 /* Background grid */
 .background-grid {
     position: absolute;
-    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    /* height is set dynamically by JS to reserve space for employer tax */
     display: flex;
     flex-direction: column-reverse;
 }

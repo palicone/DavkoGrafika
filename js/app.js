@@ -181,14 +181,14 @@
      */
     function initHandleDrag() {
         let isDragging = false;
-        let startY = 0;
-        let startIncome = 0;
 
         const getIncomeFromY = (clientY) => {
             const rect = elements.gridContainer.getBoundingClientRect();
             const gridHeight = rect.height;
             const relativeY = rect.bottom - clientY;
-            const percentage = Math.max(0, Math.min(1, relativeY / gridHeight));
+            const scaleFactor = getGridScaleFactor();
+            // The visible area for gross income is scaled, so we need to reverse the scaling
+            const percentage = Math.max(0, Math.min(1, relativeY / (gridHeight * scaleFactor)));
             return percentage * state.maxIncome;
         };
 
@@ -239,11 +239,33 @@
     }
 
     /**
+     * Calculate the scale factor for grid heights when employer tax is enabled.
+     * This reserves space at the top for the employer tax portion.
+     * @returns {number} Scale factor (0-1), where 1 means no reservation
+     */
+    function getGridScaleFactor() {
+        if (!state.showEmployerTax) {
+            return 1;
+        }
+        // Reserve space for employer tax on maxIncome
+        // Total visual height = maxIncome + (maxIncome * employerTaxRate)
+        // Scale factor = maxIncome / totalHeight
+        const employerTaxRate = state.taxModule.EMPLOYER_TAX_RATE;
+        return 1 / (1 + employerTaxRate);
+    }
+
+    /**
      * Render background grid (tax brackets)
      */
     function renderBackgroundGrid() {
         const brackets = state.taxModule.getAllBrackets(state.isMonthly);
         const maxIncome = state.maxIncome;
+        const scaleFactor = getGridScaleFactor();
+
+        // Set the background grid height to leave room for employer tax
+        const gridHeightPercent = scaleFactor * 100;
+        elements.backgroundGrid.style.height = `${gridHeightPercent}%`;
+        elements.backgroundGrid.style.top = 'auto'; // Remove top positioning
 
         let html = '';
 
@@ -346,8 +368,8 @@
         }
 
         // Calculate total height of foreground (should equal grossIncome)
-        const totalForegroundHeight = sections.reduce((sum, s) => sum + s.height, 0);
-        const foregroundHeightPercent = (state.grossIncome / maxIncome) * 100;
+        const scaleFactor = getGridScaleFactor();
+        const foregroundHeightPercent = (state.grossIncome / maxIncome) * scaleFactor * 100;
 
         // Set the foreground grid height so child percentage heights work
         elements.foregroundGrid.style.height = `${foregroundHeightPercent}%`;
@@ -411,19 +433,22 @@
         if (!state.showEmployerTax || breakdown.employerTax <= 0) {
             elements.employerTaxGrid.innerHTML = '';
             elements.employerTaxGrid.style.bottom = '';
+            elements.employerTaxGrid.style.height = '';
             return;
         }
 
-        const handlePosition = (state.grossIncome / maxIncome) * 100;
-        const employerTaxHeight = (breakdown.employerTax / maxIncome) * 100;
+        const scaleFactor = getGridScaleFactor();
+        const handlePosition = (state.grossIncome / maxIncome) * scaleFactor * 100;
+        const employerTaxHeight = (breakdown.employerTax / maxIncome) * scaleFactor * 100;
         const heightPx = (employerTaxHeight / 100) * gridHeight;
         const sizeClass = heightPx < 30 ? 'tiny' : heightPx < 60 ? 'small' : 'normal';
 
         // Position employer tax grid to start at handle level
         elements.employerTaxGrid.style.bottom = `${handlePosition}%`;
+        elements.employerTaxGrid.style.height = `${employerTaxHeight}%`;
 
         elements.employerTaxGrid.innerHTML = `
-            <div class="fg-section" style="height: ${employerTaxHeight}%;" data-height="${sizeClass}">
+            <div class="fg-section" style="height: 100%;" data-height="${sizeClass}">
                 <div class="fg-section-full fg-contributions fg-employer-tax">
                     <span class="fg-section-label">Davek delodajalca</span>
                     <span class="fg-section-amount">${formatEuro(breakdown.employerTax)}</span>
@@ -438,7 +463,8 @@
      */
     function updateHandle() {
         const maxIncome = state.maxIncome;
-        const handlePosition = (state.grossIncome / maxIncome) * 100;
+        const scaleFactor = getGridScaleFactor();
+        const handlePosition = (state.grossIncome / maxIncome) * scaleFactor * 100;
 
         // Position from bottom
         elements.incomeHandle.style.bottom = `${handlePosition}%`;
