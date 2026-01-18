@@ -133,10 +133,11 @@ Bars representing foreground net income are colored green.
     - Each bracket is split into two parts:
       - Left part is colored in the foreground tax color representing the income tax paid in that bracket
         - Spans the percentage width according to the percentage of income tax in that bracket
-        - Displays the income tax amount as text in the center
+        - Displays the bracket income tax amount as text in the center
         - Displays the bracket tax percentage as text in the lower left corner
       - Right part is colored in the foreground net income color representing the net income in that bracket
         - Spans the percentage width according to the percentage of net income in that bracket
+        - Displays the bracket net income tax amount as text in the center
   - Background backets and foreground brackets align perfectly
 - User slides up and down the gross income handle to change the gross income
   - Gross income handle is displayed as a horizontal line spanning the full width of the grid at the current gross income level

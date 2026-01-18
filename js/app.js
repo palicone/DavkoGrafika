@@ -268,7 +268,8 @@
             const taxWidth = bracket.rate * 100;
             const netWidth = 100 - taxWidth;
 
-            const limitText = bracket.max === Infinity ? formatEuro(maxIncome) : formatEuro(bracket.max);
+            // Show maxIncome as limit if bracket extends beyond visible range
+            const limitText = bracket.max > maxIncome ? formatEuro(maxIncome) : formatEuro(bracket.max);
             const rateText = Math.round(bracket.rate * 100) + '%';
 
             html += `
@@ -377,6 +378,7 @@
                             <span class="fg-section-corner">${Math.round(section.rate * 100)}%</span>
                         </div>
                         <div class="fg-bracket-net" style="width: ${netWidth}%;">
+                            <span class="fg-section-center">${formatEuro(section.net)}</span>
                         </div>
                     </div>
                 `;
