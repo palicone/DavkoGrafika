@@ -496,15 +496,4 @@ body {
     }
 }
 
-/* Hide text when sections are too small */
-.fg-section[data-height="small"] .fg-section-center,
-.fg-bracket[data-height="small"] .fg-section-center {
-    display: none;
-}
-
-.fg-section[data-height="tiny"] .fg-section-center,
-.fg-section[data-height="tiny"] .fg-section-corner,
-.fg-bracket[data-height="tiny"] .fg-section-center,
-.fg-bracket[data-height="tiny"] .fg-section-corner {
-    display: none;
-}
+/* Text is always shown, even in small sections */
