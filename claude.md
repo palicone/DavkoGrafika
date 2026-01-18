@@ -119,14 +119,14 @@ Bars representing foreground net income are colored green.
 - Foreground grid is displayed over the background grid
   - Spans from the bottom to the current gross income level and higher if the employer tax is displayed
     - If employer tax is displayed, the foreground grid extends slightly above the current gross income level to accommodate the employer tax handle
-    - There must be space left above the configured maximum gross income to accommodate the employer tax handle above the grid and below the total tax vs net income display
+    - There must be space reserved above the configured maximum gross income to accommodate the employer tax handle above the grid and below the total tax vs net income display
   - Displays the social security contribution part below the slider in the foreground tax color
     - Spans the full width of the grid
-    - Displays the social security contribution amount as text in the center
-    - Displays the social security contribution percentage as text in the center below the amount
+    - Displays the text "PRISPEVKI DELAVCA" and social security contribution amount as text in the center in a single line
+    - Displays the social security contribution percentage as text in the lower left corner
   - Displays the relief part below the security contribution in the foreground net income color
     - Spans the full width of the grid
-    - Displays the relief amount as text in the center
+    - Displays the text "OLAJSAVE" and relief amount as text in the center in a single line
   - Displays the tax brackets parts below the relief
     - Each tax bracket part spans the full width of the grid
     - Each tax bracket part height is proportional to the bracket range
@@ -134,14 +134,14 @@ Bars representing foreground net income are colored green.
       - Left part is colored in the foreground tax color representing the income tax paid in that bracket
         - Spans the percentage width according to the percentage of income tax in that bracket
         - Displays the income tax amount as text in the center
-        - Displays the income tax percentage as text in the center below the amount
+        - Displays the bracket tax percentage as text in the lower left corner
       - Right part is colored in the foreground net income color representing the net income in that bracket
         - Spans the percentage width according to the percentage of net income in that bracket
   - Background backets and foreground brackets align perfectly
 - User slides up and down the gross income handle to change the gross income
   - Gross income handle is displayed as a horizontal line spanning the full width of the grid at the current gross income level
   - Gross income handle displays the current gross income amount as text in the center
-  - Gross income is rounded to 100 EUR increments for yearly view and to 10 EUR increments for monthly view and to the bracket limits when close
+  - Gross income is rounded to 100 EUR increments for yearly view and to 10 EUR increments for monthly view
   - Foreground grid updates dynamically as the user slides the gross income handle
   - Topmost total tax vs net income display updates dynamically as the user slides the gross income handle
 

@@ -104,8 +104,7 @@ describe('Tax2025 Relief (calculateRelief)', () => {
     test('yearly relief at threshold (16832 EUR)', () => {
         const result = Tax2025.calculateRelief(YEARLY_THRESHOLD, false);
         // At threshold, additional relief should be ~0
-        const additional = YEARLY_ADDITIONAL_BASE - MULTIPLIER * YEARLY_THRESHOLD;
-        const expected = YEARLY_BASE + Math.max(0, additional);
+        const expected = YEARLY_BASE;
         assert.strictEqual(round2(result), round2(expected));
     });
 

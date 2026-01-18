@@ -36,9 +36,6 @@
         gridContainer: null
     };
 
-    // Snap threshold (5% of max income)
-    const SNAP_THRESHOLD_PERCENT = 0.05;
-
     /**
      * Format number in European format (1.234,56)
      */
@@ -65,23 +62,9 @@
     }
 
     /**
-     * Snap to bracket boundaries if close
+     * Round income to appropriate increment (no bracket snapping)
      */
-    function snapToBrackets(income) {
-        const brackets = state.taxModule.getAllBrackets(state.isMonthly);
-        const threshold = state.maxIncome * SNAP_THRESHOLD_PERCENT;
-
-        for (const bracket of brackets) {
-            // Snap to bracket min
-            if (Math.abs(income - bracket.min) < threshold && bracket.min > 0) {
-                return bracket.min;
-            }
-            // Snap to bracket max (if not infinity)
-            if (bracket.max !== Infinity && Math.abs(income - bracket.max) < threshold) {
-                return bracket.max;
-            }
-        }
-
+    function processIncome(income) {
         return roundIncome(income);
     }
 
@@ -206,7 +189,7 @@
 
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
             const newIncome = getIncomeFromY(clientY);
-            const snappedIncome = snapToBrackets(newIncome);
+            const snappedIncome = processIncome(newIncome);
 
             state.grossIncome = Math.max(0, Math.min(state.maxIncome, snappedIncome));
             updateVisualization();
@@ -232,7 +215,7 @@
             if (e.target === elements.incomeHandle || elements.incomeHandle.contains(e.target)) return;
 
             const newIncome = getIncomeFromY(e.clientY);
-            const snappedIncome = snapToBrackets(newIncome);
+            const snappedIncome = processIncome(newIncome);
             state.grossIncome = Math.max(0, Math.min(state.maxIncome, snappedIncome));
             updateVisualization();
         });
@@ -390,11 +373,10 @@
                 html += `
                     <div class="fg-bracket" style="height: ${heightPercent}%;" data-height="${sizeClass}">
                         <div class="fg-bracket-tax" style="width: ${taxWidth}%;">
-                            <span class="fg-section-amount">${formatEuro(section.tax)}</span>
-                            <span class="fg-section-percent">${Math.round(section.rate * 100)}%</span>
+                            <span class="fg-section-center">${formatEuro(section.tax)}</span>
+                            <span class="fg-section-corner">${Math.round(section.rate * 100)}%</span>
                         </div>
                         <div class="fg-bracket-net" style="width: ${netWidth}%;">
-                            <span class="fg-section-amount">${formatEuro(section.net)}</span>
                         </div>
                     </div>
                 `;
@@ -402,8 +384,7 @@
                 html += `
                     <div class="fg-section" style="height: ${heightPercent}%;" data-height="${sizeClass}">
                         <div class="fg-section-full fg-relief">
-                            <span class="fg-section-label">Olajsave</span>
-                            <span class="fg-section-amount">${formatEuro(section.amount)}</span>
+                            <span class="fg-section-center">OLAJSAVE ${formatEuro(section.amount)}</span>
                         </div>
                     </div>
                 `;
@@ -411,9 +392,8 @@
                 html += `
                     <div class="fg-section" style="height: ${heightPercent}%;" data-height="${sizeClass}">
                         <div class="fg-section-full fg-contributions">
-                            <span class="fg-section-label">Prispevki</span>
-                            <span class="fg-section-amount">${formatEuro(section.amount)}</span>
-                            <span class="fg-section-percent">${formatPercent(section.percent)}</span>
+                            <span class="fg-section-center">PRISPEVKI DELAVCA ${formatEuro(section.amount)}</span>
+                            <span class="fg-section-corner">${formatPercent(section.percent)}</span>
                         </div>
                     </div>
                 `;
@@ -450,9 +430,8 @@
         elements.employerTaxGrid.innerHTML = `
             <div class="fg-section" style="height: 100%;" data-height="${sizeClass}">
                 <div class="fg-section-full fg-contributions fg-employer-tax">
-                    <span class="fg-section-label">Davek delodajalca</span>
-                    <span class="fg-section-amount">${formatEuro(breakdown.employerTax)}</span>
-                    <span class="fg-section-percent">${formatPercent(state.taxModule.EMPLOYER_TAX_RATE * 100)}</span>
+                    <span class="fg-section-center">PRISPEVKI DELODAJALCA ${formatEuro(breakdown.employerTax)}</span>
+                    <span class="fg-section-corner">${formatPercent(state.taxModule.EMPLOYER_TAX_RATE * 100)}</span>
                 </div>
             </div>
         `;

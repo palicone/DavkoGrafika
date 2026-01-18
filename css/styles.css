@@ -361,6 +361,7 @@ body {
     align-items: center;
     padding: 4px;
     min-height: 30px;
+    position: relative;
 }
 
 .fg-contributions {
@@ -383,6 +384,7 @@ body {
     justify-content: center;
     align-items: center;
     padding: 4px;
+    position: relative;
 }
 
 .fg-bracket-net {
@@ -394,21 +396,20 @@ body {
     padding: 4px;
 }
 
-.fg-section-label {
-    font-size: 11px;
+/* Center text (label + amount in single line) */
+.fg-section-center {
+    font-size: 12px;
     font-weight: 600;
     color: var(--color-text);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.fg-section-amount {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.fg-section-percent {
+/* Corner text (percentage in lower left) */
+.fg-section-corner {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
     font-size: 11px;
     color: rgba(255, 255, 255, 0.8);
 }
@@ -496,18 +497,14 @@ body {
 }
 
 /* Hide text when sections are too small */
-.fg-section[data-height="small"] .fg-section-amount,
-.fg-section[data-height="small"] .fg-section-percent,
-.fg-bracket[data-height="small"] .fg-section-amount,
-.fg-bracket[data-height="small"] .fg-section-percent {
+.fg-section[data-height="small"] .fg-section-center,
+.fg-bracket[data-height="small"] .fg-section-center {
     display: none;
 }
 
-.fg-section[data-height="tiny"] .fg-section-label,
-.fg-section[data-height="tiny"] .fg-section-amount,
-.fg-section[data-height="tiny"] .fg-section-percent,
-.fg-bracket[data-height="tiny"] .fg-section-label,
-.fg-bracket[data-height="tiny"] .fg-section-amount,
-.fg-bracket[data-height="tiny"] .fg-section-percent {
+.fg-section[data-height="tiny"] .fg-section-center,
+.fg-section[data-height="tiny"] .fg-section-corner,
+.fg-bracket[data-height="tiny"] .fg-section-center,
+.fg-bracket[data-height="tiny"] .fg-section-corner {
     display: none;
 }
