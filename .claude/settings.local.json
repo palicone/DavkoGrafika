@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(powershell.exe -Command \"cd ''c:\\\\Dev\\\\DavkoGrafika''; & ''C:\\\\Dev\\\\tools\\\\node-v24.13.0-win-x64\\\\node.exe'' --test test/tax2025.test.js\")",
-      "Bash(C:Devtoolsnode-v24.13.0-win-x64node.exe --test c:DevDavkoGrafikatesttax2025.test.js)",
-      "Bash(\"C:/Dev/tools/node-v24.13.0-win-x64/node.exe\" --test \"c:/Dev/DavkoGrafika/test/tax2025.test.js\")"
-    ]
-  }
-}
