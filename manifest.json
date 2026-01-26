@@ -2,7 +2,7 @@
   "name": "Davko Grafika - Vizualizacija dohodnine",
   "short_name": "Davko Grafika",
   "description": "Vizualizacija davkov od dohodka v Sloveniji",
-  "start_url": "/DavkoGrafika/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#4a9c4a",
