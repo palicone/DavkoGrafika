@@ -2,7 +2,7 @@
  * Service Worker for Davko Grafika PWA
  */
 
-const CACHE_NAME = 'davko-grafika-v1';
+const CACHE_NAME = 'davko-grafika-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',

@@ -84,10 +84,12 @@ Let the 2025 be the only initial year implemented.
 Mockup image is in mockup/Mockup.png
 
 Vertical stack of elements:
-1. Total tax vs net income horizontal split bar
-2. Up and down slidable gross income input grid
+1. Header with title, share button and settings button
+2. Total tax vs net income horizontal split bar
+3. Up and down slidable gross income input grid
+4. Footre with info and coptyright
 
-Stack is taking the full width of the window.
+Stack is taking the width of the window between tootal.
 
 Bars representing foreground tax paid tax are colored dark gray.
 Bars representing foreground net income are colored green.
@@ -155,3 +157,11 @@ Bars representing foreground net income are colored green.
 
 # Planning stage details
 Store answers to asked details in the AnsweredDetails.md
+
+# Update v2 (8-Feb-2026)
+
+## Minor changes
+- Share button on the top right before the settings button
+  - Share link: davkografika.palic.si
+- Copyright banner at the bottom
+  - Ideja vizualizacije in implemntacija: Primoz Alic

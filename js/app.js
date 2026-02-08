@@ -33,7 +33,9 @@
         employerTaxGrid: null,
         incomeHandle: null,
         handleAmount: null,
-        gridContainer: null
+        gridContainer: null,
+        shareBtn: null,
+        toast: null
     };
 
     /**
@@ -90,6 +92,8 @@
         elements.incomeHandle = document.getElementById('incomeHandle');
         elements.handleAmount = document.getElementById('handleAmount');
         elements.gridContainer = document.getElementById('gridContainer');
+        elements.shareBtn = document.getElementById('shareBtn');
+        elements.toast = document.getElementById('toast');
     }
 
     /**
@@ -155,8 +159,40 @@
             updateVisualization();
         });
 
+        // Share button
+        elements.shareBtn.addEventListener('click', () => {
+            const shareData = {
+                title: 'DavkoGrafika',
+                url: 'https://davkografika.palic.si'
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(shareData.url).then(() => {
+                    showToast('Povezava kopirana');
+                });
+            }
+        });
+
         // Handle dragging
         initHandleDrag();
+    }
+
+    /**
+     * Show a toast notification
+     */
+    function showToast(message) {
+        elements.toast.textContent = message;
+        elements.toast.classList.remove('hidden');
+        // Trigger reflow to restart transition
+        elements.toast.offsetHeight;
+        elements.toast.classList.add('show');
+        setTimeout(() => {
+            elements.toast.classList.remove('show');
+            setTimeout(() => {
+                elements.toast.classList.add('hidden');
+            }, 300);
+        }, 2000);
     }
 
     /**
