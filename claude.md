@@ -87,7 +87,7 @@ Vertical stack of elements:
 1. Header with title, share button and settings button
 2. Total tax vs net income horizontal split bar
 3. Up and down slidable gross income input grid
-4. Footre with info and coptyright
+4. Footer with info and coptyright
 
 Stack is taking the width of the window between tootal.
 
@@ -140,6 +140,7 @@ Bars representing foreground net income are colored green.
       - Right part is colored in the foreground net income color representing the net income in that bracket
         - Spans the percentage width according to the percentage of net income in that bracket
         - Displays the bracket net income tax amount as text in the center
+  - Relief part and brackets part are split by a single Yellow (NCS) line and a label with the Yellow (NCS) backround with the text "OSNOVA ZA DOHODNINO: " and the ammount of the taxed income
   - Background backets and foreground brackets align perfectly
 - User slides up and down the gross income handle to change the gross income
   - Gross income handle is displayed as a horizontal line spanning the full width of the grid at the current gross income level
@@ -165,3 +166,6 @@ Store answers to asked details in the AnsweredDetails.md
   - Share link: davkografika.palic.si
 - Copyright banner at the bottom
   - Ideja vizualizacije in implemntacija: Primoz Alic
+
+# Update v3 (8-Feb-2026)
+- Yellow (NCS) line with the The taxed income ammount

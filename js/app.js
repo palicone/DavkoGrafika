@@ -368,7 +368,16 @@
             });
         }
 
-        // 2. Relief (sits above taxed income)
+        // 2. Taxed income line (between brackets and relief)
+        if (breakdown.taxedIncome > 0) {
+            sections.push({
+                type: 'taxedIncomeLine',
+                height: 0,
+                amount: breakdown.taxedIncome
+            });
+        }
+
+        // 3. Relief (sits above taxed income)
         if (breakdown.relief > 0) {
             sections.push({
                 type: 'relief',
@@ -377,7 +386,7 @@
             });
         }
 
-        // 3. Contributions (sits below gross income / at handle level)
+        // 4. Contributions (sits below gross income / at handle level)
         if (breakdown.contributions > 0) {
             sections.push({
                 type: 'contributions',
@@ -416,6 +425,12 @@
                         <div class="fg-bracket-net" style="width: ${netWidth}%;">
                             <span class="fg-section-center">${formatEuro(section.net)}</span>
                         </div>
+                    </div>
+                `;
+            } else if (section.type === 'taxedIncomeLine') {
+                html += `
+                    <div class="fg-taxed-income-line">
+                        <div class="fg-taxed-income-label">OSNOVA ZA DOHODNINO: ${formatEuro(section.amount)}</div>
                     </div>
                 `;
             } else if (section.type === 'relief') {
