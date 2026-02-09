@@ -13,7 +13,7 @@
         maxIncome: 100000,
         showEmployerTax: true,
         grossIncome: 48000,
-        taxModule: Tax2025,
+        taxModule: Tax2026,
         dailyFoodComp: 7.96,
         dailyCommuteComp: 5,
         vacationDays: 20,
@@ -51,7 +51,8 @@
         companyBonusInput: null,
         showUntaxedCheckbox: null,
         untaxedSettings: null,
-        untaxedGrid: null
+        untaxedGrid: null,
+        yearSelect: null
     };
 
     /**
@@ -60,6 +61,7 @@
     function saveState() {
         try {
             const data = {
+                taxYear: elements.yearSelect.value,
                 isMonthly: state.isMonthly,
                 maxIncomeInput: parseFloat(elements.maxIncomeInput.value) || 100000,
                 showEmployerTax: state.showEmployerTax,
@@ -86,6 +88,13 @@
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return false;
             const data = JSON.parse(raw);
+
+            // Restore year selection
+            if (data.taxYear != null) {
+                elements.yearSelect.value = data.taxYear;
+                const taxModules = { '2025': Tax2025, '2026': Tax2026 };
+                state.taxModule = taxModules[data.taxYear] || Tax2026;
+            }
 
             // Restore form inputs
             if (data.maxIncomeInput != null) elements.maxIncomeInput.value = data.maxIncomeInput;
@@ -187,6 +196,7 @@
         elements.showUntaxedCheckbox = document.getElementById('showUntaxedCheckbox');
         elements.untaxedSettings = document.getElementById('untaxedSettings');
         elements.untaxedGrid = document.getElementById('untaxedGrid');
+        elements.yearSelect = document.getElementById('yearSelect');
     }
 
     /**
@@ -237,6 +247,14 @@
             elements.maxIncomeInput.value = value;
             state.maxIncome = state.isMonthly ? Math.round(value / 12) : value;
             state.grossIncome = Math.min(state.grossIncome, state.maxIncome);
+            updateVisualization();
+        });
+
+        // Year select
+        elements.yearSelect.addEventListener('change', () => {
+            const year = elements.yearSelect.value;
+            const taxModules = { '2025': Tax2025, '2026': Tax2026 };
+            state.taxModule = taxModules[year] || Tax2026;
             updateVisualization();
         });
 

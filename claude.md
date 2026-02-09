@@ -73,7 +73,8 @@ Provided functions are:
 
 ### Year 2025 parameters
 In the 2025.md file
-Let the 2025 be the only initial year implemented.
+### Year 2026 parameters
+In the 2026.md file
 
 # Visualization model
 Mockup image is in mockup/Mockup.png
@@ -178,3 +179,6 @@ Store answers to asked details in the AnsweredDetails.md
 # Update v6.1 (9-Feb-2026)
 - Config info
 - Config OK button
+
+# Update v7 (10-Feb-2026)
+- 2026

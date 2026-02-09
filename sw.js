@@ -2,7 +2,7 @@
  * Service Worker for Davko Grafika PWA
  */
 
-const APP_VERSION = 'v6.1';
+const APP_VERSION = 'v7';
 const CACHE_NAME = 'davko-grafika-' + APP_VERSION;
 const ASSETS_TO_CACHE = [
     '/',
@@ -10,6 +10,7 @@ const ASSETS_TO_CACHE = [
     '/css/styles.css',
     '/js/app.js',
     '/js/tax2025.js',
+    '/js/tax2026.js',
     '/img/icon.png',
     '/manifest.json'
 ];
