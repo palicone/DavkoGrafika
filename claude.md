@@ -168,3 +168,6 @@ Store answers to asked details in the AnsweredDetails.md
 
 # Update v4 (9-Feb-2026)
 - Untaxed: [vacation allowence, company bonus, food and commute compensations]
+
+# Update v5 (9-Feb-2026)
+- Store configuration and slider position locally in the browser

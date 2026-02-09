@@ -5,6 +5,8 @@
 (function() {
     'use strict';
 
+    const STORAGE_KEY = 'davkografika-state';
+
     // App state
     const state = {
         isMonthly: false,
@@ -51,6 +53,75 @@
         untaxedSettings: null,
         untaxedGrid: null
     };
+
+    /**
+     * Save state to localStorage
+     */
+    function saveState() {
+        try {
+            const data = {
+                isMonthly: state.isMonthly,
+                maxIncomeInput: parseFloat(elements.maxIncomeInput.value) || 100000,
+                showEmployerTax: state.showEmployerTax,
+                grossIncome: state.grossIncome,
+                dailyFoodComp: state.dailyFoodComp,
+                dailyCommuteComp: state.dailyCommuteComp,
+                vacationDays: state.vacationDays,
+                vacationAllowance: state.vacationAllowance,
+                companyBonus: state.companyBonus,
+                showUntaxed: state.showUntaxed
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {
+            // localStorage unavailable or full - ignore
+        }
+    }
+
+    /**
+     * Load state from localStorage and apply to state + form inputs
+     * @returns {boolean} true if state was restored
+     */
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const data = JSON.parse(raw);
+
+            // Restore form inputs
+            if (data.maxIncomeInput != null) elements.maxIncomeInput.value = data.maxIncomeInput;
+            if (data.showEmployerTax != null) elements.employerTaxCheckbox.checked = data.showEmployerTax;
+            if (data.showUntaxed != null) elements.showUntaxedCheckbox.checked = data.showUntaxed;
+            if (data.dailyFoodComp != null) elements.foodCompInput.value = data.dailyFoodComp;
+            if (data.dailyCommuteComp != null) elements.commuteCompInput.value = data.dailyCommuteComp;
+            if (data.vacationDays != null) elements.vacationDaysInput.value = data.vacationDays;
+            if (data.vacationAllowance != null) elements.vacationAllowanceInput.value = data.vacationAllowance;
+            if (data.companyBonus != null) elements.companyBonusInput.value = data.companyBonus;
+
+            // Restore toggle state
+            if (data.isMonthly) {
+                elements.yearlyBtn.classList.remove('active');
+                elements.monthlyBtn.classList.add('active');
+            }
+
+            // Restore state values
+            state.isMonthly = !!data.isMonthly;
+            state.showEmployerTax = !!data.showEmployerTax;
+            state.showUntaxed = !!data.showUntaxed;
+            state.dailyFoodComp = data.dailyFoodComp ?? 7.96;
+            state.dailyCommuteComp = data.dailyCommuteComp ?? 5;
+            state.vacationDays = data.vacationDays ?? 20;
+            state.vacationAllowance = data.vacationAllowance ?? 1854;
+            state.companyBonus = data.companyBonus ?? 1854;
+
+            const maxInput = data.maxIncomeInput || 100000;
+            state.maxIncome = state.isMonthly ? Math.round(maxInput / 12) : maxInput;
+            state.grossIncome = Math.max(0, Math.min(data.grossIncome ?? 48000, state.maxIncome));
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 
     /**
      * Format number in European format (1.234,56)
@@ -663,6 +734,7 @@
         renderForegroundGrid();
         updateHandle();
         updateSummaryBar();
+        saveState();
     }
 
     /**
@@ -672,17 +744,19 @@
         initElements();
         initEventListeners();
 
-        // Set initial values from inputs
-        state.maxIncome = parseFloat(elements.maxIncomeInput.value) || 100000;
-        state.showEmployerTax = elements.employerTaxCheckbox.checked;
-        state.dailyFoodComp = parseFloat(elements.foodCompInput.value) || 7.96;
-        state.dailyCommuteComp = parseFloat(elements.commuteCompInput.value) || 5;
-        state.vacationDays = parseInt(elements.vacationDaysInput.value) || 20;
-        state.vacationAllowance = parseFloat(elements.vacationAllowanceInput.value) || 1854;
-        state.companyBonus = parseFloat(elements.companyBonusInput.value) || 1854;
-        state.showUntaxed = elements.showUntaxedCheckbox.checked;
+        // Restore saved state, or fall back to defaults from HTML inputs
+        if (!loadState()) {
+            state.maxIncome = parseFloat(elements.maxIncomeInput.value) || 100000;
+            state.showEmployerTax = elements.employerTaxCheckbox.checked;
+            state.dailyFoodComp = parseFloat(elements.foodCompInput.value) || 7.96;
+            state.dailyCommuteComp = parseFloat(elements.commuteCompInput.value) || 5;
+            state.vacationDays = parseInt(elements.vacationDaysInput.value) || 20;
+            state.vacationAllowance = parseFloat(elements.vacationAllowanceInput.value) || 1854;
+            state.companyBonus = parseFloat(elements.companyBonusInput.value) || 1854;
+            state.showUntaxed = elements.showUntaxedCheckbox.checked;
+            state.grossIncome = Math.min(state.grossIncome, state.maxIncome);
+        }
         elements.untaxedSettings.classList.toggle('disabled', !state.showUntaxed);
-        state.grossIncome = Math.min(state.grossIncome, state.maxIncome);
 
         // Initial render
         updateVisualization();
