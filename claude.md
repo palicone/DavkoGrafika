@@ -174,3 +174,7 @@ Store answers to asked details in the AnsweredDetails.md
 
 # Update v6 (9-Feb-2026)
 - Versioning and client cache invalidation
+
+# Update v6.1 (9-Feb-2026)
+- Config info
+- Config OK button

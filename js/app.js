@@ -28,7 +28,7 @@
         settingsModal: null,
         warningAcceptBtn: null,
         settingsBtn: null,
-        settingsCloseBtn: null,
+        settingsOkBtn: null,
         yearlyBtn: null,
         monthlyBtn: null,
         maxIncomeInput: null,
@@ -163,7 +163,7 @@
         elements.settingsModal = document.getElementById('settingsModal');
         elements.warningAcceptBtn = document.getElementById('warningAcceptBtn');
         elements.settingsBtn = document.getElementById('settingsBtn');
-        elements.settingsCloseBtn = document.getElementById('settingsCloseBtn');
+        elements.settingsOkBtn = document.getElementById('settingsOkBtn');
         elements.yearlyBtn = document.getElementById('yearlyBtn');
         elements.monthlyBtn = document.getElementById('monthlyBtn');
         elements.maxIncomeInput = document.getElementById('maxIncomeInput');
@@ -203,14 +203,8 @@
             elements.settingsModal.classList.remove('hidden');
         });
 
-        elements.settingsCloseBtn.addEventListener('click', () => {
+        elements.settingsOkBtn.addEventListener('click', () => {
             elements.settingsModal.classList.add('hidden');
-        });
-
-        elements.settingsModal.addEventListener('click', (e) => {
-            if (e.target === elements.settingsModal) {
-                elements.settingsModal.classList.add('hidden');
-            }
         });
 
         // Yearly/Monthly toggle

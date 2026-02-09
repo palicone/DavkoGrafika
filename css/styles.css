@@ -65,6 +65,12 @@ body {
     overflow-y: auto;
 }
 
+.settings-modal {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -76,20 +82,6 @@ body {
     margin: 0;
 }
 
-.close-btn {
-    background: none;
-    border: none;
-    color: var(--color-text);
-    font-size: 28px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    opacity: 0.7;
-}
-
-.close-btn:hover {
-    opacity: 1;
-}
 
 /* Warning modal */
 .warning-modal h2 {
@@ -112,6 +104,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 12px;
+}
+
+.settings-footer {
+    padding-top: 20px;
+    flex-shrink: 0;
 }
 
 .setting-group {

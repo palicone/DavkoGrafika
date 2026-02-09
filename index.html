@@ -33,7 +33,6 @@
         <div class="modal-content settings-modal">
             <div class="modal-header">
                 <h2>Nastavitve</h2>
-                <button id="settingsCloseBtn" class="close-btn">&times;</button>
             </div>
             <div class="settings-form">
                 <div class="setting-group">
@@ -81,14 +80,19 @@
                         <input type="number" id="vacationDaysInput" value="20" min="0" max="365" step="1">
                     </div>
                     <div class="setting-group">
-                        <label for="vacationAllowanceInput">Letni regres (EUR)</label>
+                        <label for="vacationAllowanceInput">Neobdavčen letni regres (EUR)</label>
                         <input type="number" id="vacationAllowanceInput" value="1854" min="0" step="1">
+                        <span class="setting-info">Znesek med minimalno in povprečno bruto plačo</span>
                     </div>
                     <div class="setting-group">
-                        <label for="companyBonusInput">Letna božičnica (EUR)</label>
+                        <label for="companyBonusInput">Neobdavčen poslovni uspeh (EUR)</label>
                         <input type="number" id="companyBonusInput" value="1854" min="0" step="1">
+                        <span class="setting-info">Znesek med minimalno in povprečno bruto plačo (prispevki se placajo)</span>
                     </div>
                 </div>
+            </div>
+            <div class="settings-footer">
+                <button id="settingsOkBtn" class="btn btn-primary">OK</button>
             </div>
         </div>
     </div>
