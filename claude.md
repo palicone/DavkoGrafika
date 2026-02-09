@@ -171,3 +171,6 @@ Store answers to asked details in the AnsweredDetails.md
 
 # Update v5 (9-Feb-2026)
 - Store configuration and slider position locally in the browser
+
+# Update v6 (9-Feb-2026)
+- Versioning and client cache invalidation

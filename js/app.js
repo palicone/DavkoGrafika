@@ -769,11 +769,31 @@
         init();
     }
 
-    // Register service worker
+    // Register service worker with update detection
     if ('serviceWorker' in navigator) {
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+        });
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'VERSION') {
+                const versionEl = document.getElementById('appVersion');
+                if (versionEl) versionEl.textContent = event.data.version;
+            }
+        });
+
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registered'))
+                .then(reg => {
+                    console.log('Service Worker registered');
+                    reg.update();
+                    if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage('GET_VERSION');
+                    }
+                })
                 .catch(err => console.log('Service Worker registration failed:', err));
         });
     }

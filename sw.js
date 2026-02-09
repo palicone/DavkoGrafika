@@ -2,7 +2,8 @@
  * Service Worker for Davko Grafika PWA
  */
 
-const CACHE_NAME = 'davko-grafika-v4';
+const APP_VERSION = 'v6';
+const CACHE_NAME = 'davko-grafika-' + APP_VERSION;
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -47,21 +48,45 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Message handler - respond with version
+self.addEventListener('message', (event) => {
+    if (event.data === 'GET_VERSION') {
+        event.source.postMessage({ type: 'VERSION', version: APP_VERSION });
+    }
+});
+
+// Fetch event - network-first for navigation, cache-first for assets
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) {
+    if (event.request.mode === 'navigate') {
+        // Network-first for HTML navigation requests
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Cache the fresh response
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
                     return response;
-                }
-                return fetch(event.request);
-            })
-            .catch(() => {
-                // If both cache and network fail, return a fallback
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/index.html');
-                }
-            })
-    );
+                })
+                .catch(() => {
+                    return caches.match(event.request)
+                        .then((response) => response || caches.match('/index.html'));
+                })
+        );
+    } else {
+        // Cache-first for static assets
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    if (response) {
+                        return response;
+                    }
+                    return fetch(event.request);
+                })
+                .catch(() => {
+                    // Silently fail for non-navigation requests
+                })
+        );
+    }
 });
