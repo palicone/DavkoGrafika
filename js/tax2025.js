@@ -14,6 +14,9 @@ const Tax2025 = (function() {
     // Employer tax rate (16.1%)
     const EMPLOYER_TAX_RATE = 0.161;
 
+    // Work days per year
+    const WORK_DAYS = 251;
+
     // Relief thresholds and values (yearly)
     const RELIEF_YEARLY = {
         threshold: 16832.00,
@@ -245,6 +248,98 @@ const Tax2025 = (function() {
         };
     }
 
+    /**
+     * Get complete tax breakdown including untaxed extras
+     * @param {number} grossIncome - Gross income
+     * @param {boolean} isMonthly - Whether calculation is monthly
+     * @param {object} options - Extra options
+     * @param {boolean} options.includeEmployerTax - Whether to include employer tax
+     * @param {number} options.vacationAllowance - Yearly vacation allowance (regres)
+     * @param {number} options.companyBonus - Yearly company bonus (božičnica)
+     * @param {number} options.dailyFoodComp - Daily food compensation
+     * @param {number} options.dailyCommuteComp - Daily commute compensation
+     * @param {number} options.vacationDays - Number of vacation days
+     * @returns {object} Complete breakdown with extras
+     */
+    function getFullBreakdownWithExtras(grossIncome, isMonthly, options) {
+        const {
+            includeEmployerTax = false,
+            vacationAllowance = 0,
+            companyBonus = 0,
+            dailyFoodComp = 0,
+            dailyCommuteComp = 0,
+            vacationDays = 0
+        } = options || {};
+
+        // Base breakdown (contributions from gross only determine taxed income)
+        const contributions = calculateContributions(grossIncome, isMonthly);
+        const relief = calculateRelief(grossIncome, isMonthly);
+        const taxedIncome = Math.max(0, grossIncome - contributions - relief);
+        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly);
+
+        const brackets = isMonthly ? BRACKETS_MONTHLY : BRACKETS_YEARLY;
+        const bracketBreakdown = brackets.map((bracket, i) => ({
+            min: bracket.min,
+            max: bracket.max,
+            rate: bracket.rate,
+            tax: calculateBracketTax(taxedIncome, i, isMonthly)
+        }));
+
+        // Yearly compensation amounts
+        const workDaysUsed = Math.max(0, WORK_DAYS - vacationDays);
+        const yearlyFoodComp = dailyFoodComp * workDaysUsed;
+        const yearlyCommuteComp = dailyCommuteComp * workDaysUsed;
+
+        // Apply monthly factor
+        const monthlyFactor = isMonthly ? (1 / 12) : 1;
+        const foodComp = yearlyFoodComp * monthlyFactor;
+        const commuteComp = yearlyCommuteComp * monthlyFactor;
+        const regres = vacationAllowance * monthlyFactor;
+        const bonus = companyBonus * monthlyFactor;
+
+        // Bonus contributions (same rate, no fixed component)
+        const bonusContributions = bonus * CONTRIBUTION_RATE;
+        const bonusEmployerTax = includeEmployerTax ? bonus * EMPLOYER_TAX_RATE : 0;
+
+        // Totals
+        const totalContributions = contributions + bonusContributions;
+        const grossEmployerTax = includeEmployerTax ? calculateEmployerTax(grossIncome) : 0;
+        const totalEmployerTax = grossEmployerTax + bonusEmployerTax;
+
+        const netIncome = grossIncome + foodComp + commuteComp + regres + bonus - totalContributions - incomeTax;
+        const totalAboveHandle = regres + bonus + foodComp + commuteComp;
+
+        const totalEmployeeTax = totalContributions + incomeTax;
+        const totalTax = totalEmployeeTax + totalEmployerTax;
+        const totalCost = grossIncome + totalEmployerTax + foodComp + commuteComp + regres + bonus;
+
+        return {
+            grossIncome,
+            contributions,
+            relief,
+            taxedIncome,
+            incomeTax,
+            bracketBreakdown,
+            // Extras
+            foodComp,
+            commuteComp,
+            regres,
+            bonus,
+            bonusContributions,
+            bonusEmployerTax,
+            totalContributions,
+            totalEmployerTax,
+            totalAboveHandle,
+            // Totals
+            netIncome,
+            totalEmployeeTax,
+            totalTax,
+            totalCost,
+            taxPercentage: totalCost > 0 ? (totalTax / totalCost) * 100 : 0,
+            netPercentage: totalCost > 0 ? (netIncome / totalCost) * 100 : 0
+        };
+    }
+
     // Public API
     return {
         getYear,
@@ -259,7 +354,9 @@ const Tax2025 = (function() {
         calculateEmployerTax,
         calculateNetIncome,
         getFullBreakdown,
+        getFullBreakdownWithExtras,
         CONTRIBUTION_RATE,
-        EMPLOYER_TAX_RATE
+        EMPLOYER_TAX_RATE,
+        WORK_DAYS
     };
 })();

@@ -8,25 +8,42 @@ how much tax they owe based on Slovenia's progressive tax brackets.
 The tax is spilt into social security contributions and income tax.
 Contributions are called "prispevki" and income tax is called "dohodnina" in Slovenian.
 There is also a tax which the employer pays on behalf of the employee called "davek na dohodke iz delovnega razmerja".
+There are vacation allowence ("regres") and company bonus ("bozicnica") which both have untaxed part.
+There are no security contributions from vacation allownce but there are from company bonus.
+Company also pays food and commute to work and home compensation which are both untaxed and without security contributions to certain ammounts.
 
 # Tax calculation model
 The income or gross income is what the employer pays the employee before any deductions.
-The net income is what the employee takes home after all deductions.
-Employee contributions (prispevki) are calculated based on gross income.
+The net income is what the employee takes home after all deductions plus vacation allowence plus company bonus plus food and commute compensation.
+Employee contributions for taxed income determination (prispevki) are calculated based on gross income.
 The relief (olajsava) is calculated based on gross income.
-The taxed income is gross income minus employee contributions minus relief.
+The taxed income is gross income minus employee contributions (without the part from the company bonus) minus relief.
 The income tax (dohodnina) is calculated based on the taxed income according to progressive brackets.
-The employer tax is calculated based on gross income.
-Complete taxes are contributions plus income tax paid by the employee plus employer tax paid by the employer.
-Net income is gross income minus employee contributions minus income tax.
+The employer tax is calculated based on gross income plus employer contributions from company bonus.
+Complete taxes are contributions (from gross and company bonus) plus income tax paid by the employee plus employer tax paid by the employer.
+Net income is gross income plus compensations plus allowence plus bonus minus employee contributions (from gross and company bonus) minus income tax.
 Calculation model and parameters are given yearly by the Slovenian tax authority.
 Usually the calculation model is given for the calendar year. But there is also a monthly calculation model.
 
 ## User configurable parameters
 - Yearly or monthly view
-- Maximum gross yearly or monthly income based on the selected view
+- Maximum gross yearly income for yearly view
+- Maximum gross monthly income for monthly view
+- Daily untaxed food compensastion
+  - defualt 7.96EUR
+  - info: only for days at work; may vary based on hours and field
+- Daily untaxed commute compensation
+  - default 5EUR
+  - info: only days at work; varies based on distance, public transport availability, public or private sector
+- Vacation days
+  - used to reduce food and transportation compensation
+- Untaxed yearly vacation allowence
+  - Also no social security contribution
+- Untaxed yearly company bonus
+  - Has social security contribution  
 - Tax year
 - Display employer tax
+
 
 ## User input
 - Gross income
@@ -39,6 +56,7 @@ Parameters are:
 - Relief calculation rules
 - Income tax brackets and rates
 - Employer tax rates
+- Work days
 
 Provided functions are:
 - Calculate employee contributions
@@ -50,34 +68,11 @@ Provided functions are:
 - Calculate net income in a given bracket
 - Calculate total income tax
 - Calculate employer tax
+- Yearly food and commute compensation
+  - monthly food and commute comepnsation 1/12 of the daily for year work days minus vacation days
 
 ### Year 2025 parameters
-- Social security contribution rates: 23.1% from gross yearly or monthly income + fixed amount of 37.17 EUR monthly
-
-- Relief:
-  - Yearly:
-    - Up to 16,832.00 EUR gross income: 5,260.00 + (19,736.99  - 1.17259 x gross yearly income) EUR
-    - Above 16,832.00 EUR gross income: 5,260.00 EUR
-  - Monthly:
-    - Up to 1,402.67 EUR gross income: 438.33 + (1,644.75 - 1.17259 x gross monthly income) EUR
-    - Above 1,402.67 EUR gross income: 438.33 EUR
-
-- Income tax brackets:
-  - Yearly:
-    - Up to 9,210.26 EUR: 16%
-    - 9,210.26 EUR to 27,089.00 EUR: 26%
-    - 27,089.00 EUR to 54,178.00 EUR: 33%
-    - 54,178.00 EUR to 78,016.32 EUR: 39%
-    - Above 78,016.32 EUR: 50%
-  - Monthly:
-    - Up to 767.52 EUR: 16%
-    - 767.52 EUR to 2,257.42 EUR: 26%
-    - 2,257.42 EUR to 4,514.83 EUR: 33%
-    - 4,514.83 EUR to 6,501.36 EUR: 39%
-    - Above 6,501.36 EUR: 50%
-
-- Employer tax: 16.1% from gross yearly or monthly income
-
+In the 2025.md file
 Let the 2025 be the only initial year implemented.
 
 # Visualization model
@@ -119,9 +114,10 @@ Bars representing foreground net income are colored green.
   - Not all bracket might be visible at once depending on the maximum gross income
   - Each bar height is proportional to the bracket range
 - Foreground grid is displayed over the background grid
-  - Spans from the bottom to the current gross income level and higher if the employer tax is displayed
-    - If employer tax is displayed, the foreground grid extends slightly above the current gross income level to accommodate the employer tax handle
-    - There must be space reserved above the configured maximum gross income to accommodate the employer tax handle above the grid and below the total tax vs net income display
+  - Vertically spans from the bottom to the current gross income level and higher for the ammount of sum of all untaxed parts (vacation allowence, company bonus, food and commute compensations) and even higher if the employer tax is displayed
+    - The foreground grid extends above the current gross income level to accommodate untaxed and the employer tax if selected for display
+    - There must be space reserved above the configured maximum gross income to accommodate untaxed and the employer tax above the grid and below the total tax vs net income display
+  - Displays the untaxed part above the slider in the foreground tax color
   - Displays the social security contribution part below the slider in the foreground tax color
     - Spans the full width of the grid
     - Displays the text "PRISPEVKI DELAVCA" and social security contribution amount as text in the center in a single line
@@ -165,7 +161,10 @@ Store answers to asked details in the AnsweredDetails.md
 - Share button on the top right before the settings button
   - Share link: davkografika.palic.si
 - Copyright banner at the bottom
-  - Ideja vizualizacije in implemntacija: Primoz Alic
+  - Ideja vizualizacije: Primoz Alic (c)
 
 # Update v3 (8-Feb-2026)
 - Yellow (NCS) line with the The taxed income ammount
+
+# Update v4 (9-Feb-2026)
+- Untaxed: [vacation allowence, company bonus, food and commute compensations]

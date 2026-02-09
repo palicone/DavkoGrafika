@@ -11,7 +11,13 @@
         maxIncome: 100000,
         showEmployerTax: true,
         grossIncome: 48000,
-        taxModule: Tax2025
+        taxModule: Tax2025,
+        dailyFoodComp: 7.96,
+        dailyCommuteComp: 5,
+        vacationDays: 20,
+        vacationAllowance: 1854,
+        companyBonus: 1854,
+        showUntaxed: false
     };
 
     // DOM elements
@@ -35,7 +41,15 @@
         handleAmount: null,
         gridContainer: null,
         shareBtn: null,
-        toast: null
+        toast: null,
+        foodCompInput: null,
+        commuteCompInput: null,
+        vacationDaysInput: null,
+        vacationAllowanceInput: null,
+        companyBonusInput: null,
+        showUntaxedCheckbox: null,
+        untaxedSettings: null,
+        untaxedGrid: null
     };
 
     /**
@@ -94,6 +108,14 @@
         elements.gridContainer = document.getElementById('gridContainer');
         elements.shareBtn = document.getElementById('shareBtn');
         elements.toast = document.getElementById('toast');
+        elements.foodCompInput = document.getElementById('foodCompInput');
+        elements.commuteCompInput = document.getElementById('commuteCompInput');
+        elements.vacationDaysInput = document.getElementById('vacationDaysInput');
+        elements.vacationAllowanceInput = document.getElementById('vacationAllowanceInput');
+        elements.companyBonusInput = document.getElementById('companyBonusInput');
+        elements.showUntaxedCheckbox = document.getElementById('showUntaxedCheckbox');
+        elements.untaxedSettings = document.getElementById('untaxedSettings');
+        elements.untaxedGrid = document.getElementById('untaxedGrid');
     }
 
     /**
@@ -156,6 +178,39 @@
         // Employer tax checkbox
         elements.employerTaxCheckbox.addEventListener('change', () => {
             state.showEmployerTax = elements.employerTaxCheckbox.checked;
+            updateVisualization();
+        });
+
+        // Show untaxed checkbox
+        elements.showUntaxedCheckbox.addEventListener('change', () => {
+            state.showUntaxed = elements.showUntaxedCheckbox.checked;
+            elements.untaxedSettings.classList.toggle('disabled', !state.showUntaxed);
+            updateVisualization();
+        });
+
+        // Compensation and allowance inputs
+        elements.foodCompInput.addEventListener('change', () => {
+            state.dailyFoodComp = Math.max(0, parseFloat(elements.foodCompInput.value) || 0);
+            updateVisualization();
+        });
+
+        elements.commuteCompInput.addEventListener('change', () => {
+            state.dailyCommuteComp = Math.max(0, parseFloat(elements.commuteCompInput.value) || 0);
+            updateVisualization();
+        });
+
+        elements.vacationDaysInput.addEventListener('change', () => {
+            state.vacationDays = Math.max(0, Math.min(365, parseInt(elements.vacationDaysInput.value) || 0));
+            updateVisualization();
+        });
+
+        elements.vacationAllowanceInput.addEventListener('change', () => {
+            state.vacationAllowance = Math.max(0, parseFloat(elements.vacationAllowanceInput.value) || 0);
+            updateVisualization();
+        });
+
+        elements.companyBonusInput.addEventListener('change', () => {
+            state.companyBonus = Math.max(0, parseFloat(elements.companyBonusInput.value) || 0);
             updateVisualization();
         });
 
@@ -258,19 +313,32 @@
     }
 
     /**
-     * Calculate the scale factor for grid heights when employer tax is enabled.
-     * This reserves space at the top for the employer tax portion.
+     * Build options object for getFullBreakdownWithExtras
+     */
+    function getExtrasOptions() {
+        return {
+            includeEmployerTax: state.showEmployerTax,
+            vacationAllowance: state.showUntaxed ? state.vacationAllowance : 0,
+            companyBonus: state.showUntaxed ? state.companyBonus : 0,
+            dailyFoodComp: state.showUntaxed ? state.dailyFoodComp : 0,
+            dailyCommuteComp: state.showUntaxed ? state.dailyCommuteComp : 0,
+            vacationDays: state.showUntaxed ? state.vacationDays : 0
+        };
+    }
+
+    /**
+     * Calculate the scale factor for grid heights.
+     * Reserves space at the top for untaxed extras and employer tax.
      * @returns {number} Scale factor (0-1), where 1 means no reservation
      */
     function getGridScaleFactor() {
-        if (!state.showEmployerTax) {
-            return 1;
-        }
-        // Reserve space for employer tax on maxIncome
-        // Total visual height = maxIncome + (maxIncome * employerTaxRate)
-        // Scale factor = maxIncome / totalHeight
-        const employerTaxRate = state.taxModule.EMPLOYER_TAX_RATE;
-        return 1 / (1 + employerTaxRate);
+        // Calculate what appears above the handle at maxIncome
+        const breakdown = state.taxModule.getFullBreakdownWithExtras(
+            state.maxIncome, state.isMonthly, getExtrasOptions()
+        );
+        const totalAbove = breakdown.totalAboveHandle + breakdown.totalEmployerTax;
+        if (totalAbove <= 0) return 1;
+        return state.maxIncome / (state.maxIncome + totalAbove);
     }
 
     /**
@@ -331,13 +399,14 @@
      * 2. Relief (green - untaxed)
      * 3. Contributions (dark gray - deducted from gross)
      * -- Handle sits here at gross income level --
-     * 4. Employer tax (above handle, if enabled) - rendered separately
+     * 4. Untaxed extras (above handle) - rendered separately
+     * 5. Employer tax (above untaxed) - rendered separately
      */
     function renderForegroundGrid() {
-        const breakdown = state.taxModule.getFullBreakdown(
+        const breakdown = state.taxModule.getFullBreakdownWithExtras(
             state.grossIncome,
             state.isMonthly,
-            state.showEmployerTax
+            getExtrasOptions()
         );
 
         const maxIncome = state.maxIncome;
@@ -386,13 +455,13 @@
             });
         }
 
-        // 4. Contributions (sits below gross income / at handle level)
+        // 4. Contributions (height = gross contributions only, text = total contributions)
         if (breakdown.contributions > 0) {
             sections.push({
                 type: 'contributions',
                 height: breakdown.contributions,
-                amount: breakdown.contributions,
-                percent: breakdown.grossIncome > 0 ? (breakdown.contributions / breakdown.grossIncome) * 100 : 0
+                amount: breakdown.totalContributions,
+                percent: breakdown.grossIncome > 0 ? (breakdown.totalContributions / breakdown.grossIncome) * 100 : 0
             });
         }
 
@@ -455,15 +524,74 @@
 
         elements.foregroundGrid.innerHTML = html;
 
-        // Render employer tax above handle (separate grid)
+        // Render untaxed extras above handle
+        renderUntaxedGrid(breakdown, maxIncome, gridHeight);
+
+        // Render employer tax above untaxed extras
         renderEmployerTaxGrid(breakdown, maxIncome, gridHeight);
     }
 
     /**
-     * Render employer tax grid (above handle)
+     * Render untaxed extras grid (above handle, below employer tax)
+     * Layout (bottom to top): bonus contributions (gray) → combined untaxed (green)
+     */
+    function renderUntaxedGrid(breakdown, maxIncome, gridHeight) {
+        const totalAbove = breakdown.totalAboveHandle;
+        if (totalAbove <= 0) {
+            elements.untaxedGrid.innerHTML = '';
+            elements.untaxedGrid.style.bottom = '';
+            elements.untaxedGrid.style.height = '';
+            return;
+        }
+
+        const scaleFactor = getGridScaleFactor();
+        const handlePosition = (state.grossIncome / maxIncome) * scaleFactor * 100;
+        const untaxedHeight = (totalAbove / maxIncome) * scaleFactor * 100;
+
+        elements.untaxedGrid.style.bottom = `${handlePosition}%`;
+        elements.untaxedGrid.style.height = `${untaxedHeight}%`;
+
+        const bonusContrib = breakdown.bonusContributions;
+        const untaxedNet = totalAbove - bonusContrib;
+
+        let html = '';
+
+        // Bottom block: bonus contributions (gray, full width) - just above handle
+        if (bonusContrib > 0) {
+            const contribPercent = (bonusContrib / totalAbove) * 100;
+            const contribPx = (untaxedHeight / 100) * gridHeight * (contribPercent / 100);
+            const contribSize = contribPx < 30 ? 'tiny' : contribPx < 60 ? 'small' : 'normal';
+            html += `
+                <div class="fg-section" style="height: ${contribPercent}%;" data-height="${contribSize}">
+                    <div class="fg-section-full fg-contributions">
+                        <span class="fg-section-center">PRISPEVKI BOŽIČNICA ${formatEuro(bonusContrib)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Upper block: combined untaxed (green, full width)
+        if (untaxedNet > 0) {
+            const netPercent = (untaxedNet / totalAbove) * 100;
+            const netPx = (untaxedHeight / 100) * gridHeight * (netPercent / 100);
+            const netSize = netPx < 30 ? 'tiny' : netPx < 60 ? 'small' : 'normal';
+            html += `
+                <div class="fg-section" style="height: ${netPercent}%;" data-height="${netSize}">
+                    <div class="fg-section-full fg-relief">
+                        <span class="fg-section-center">MALICA, PREVOZ, REGRES, POSL. USP. ${formatEuro(untaxedNet)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        elements.untaxedGrid.innerHTML = html;
+    }
+
+    /**
+     * Render employer tax grid (above untaxed extras)
      */
     function renderEmployerTaxGrid(breakdown, maxIncome, gridHeight) {
-        if (!state.showEmployerTax || breakdown.employerTax <= 0) {
+        if (!state.showEmployerTax || breakdown.totalEmployerTax <= 0) {
             elements.employerTaxGrid.innerHTML = '';
             elements.employerTaxGrid.style.bottom = '';
             elements.employerTaxGrid.style.height = '';
@@ -472,18 +600,19 @@
 
         const scaleFactor = getGridScaleFactor();
         const handlePosition = (state.grossIncome / maxIncome) * scaleFactor * 100;
-        const employerTaxHeight = (breakdown.employerTax / maxIncome) * scaleFactor * 100;
+        const untaxedHeight = (breakdown.totalAboveHandle / maxIncome) * scaleFactor * 100;
+        const employerTaxHeight = (breakdown.totalEmployerTax / maxIncome) * scaleFactor * 100;
         const heightPx = (employerTaxHeight / 100) * gridHeight;
         const sizeClass = heightPx < 30 ? 'tiny' : heightPx < 60 ? 'small' : 'normal';
 
-        // Position employer tax grid to start at handle level
-        elements.employerTaxGrid.style.bottom = `${handlePosition}%`;
+        // Position employer tax grid above handle + untaxed extras
+        elements.employerTaxGrid.style.bottom = `${handlePosition + untaxedHeight}%`;
         elements.employerTaxGrid.style.height = `${employerTaxHeight}%`;
 
         elements.employerTaxGrid.innerHTML = `
             <div class="fg-section" style="height: 100%;" data-height="${sizeClass}">
                 <div class="fg-section-full fg-contributions fg-employer-tax">
-                    <span class="fg-section-center">PRISPEVKI DELODAJALCA ${formatEuro(breakdown.employerTax)}</span>
+                    <span class="fg-section-center">PRISPEVKI DELODAJALCA ${formatEuro(breakdown.totalEmployerTax)}</span>
                     <span class="fg-section-corner">${formatPercent(state.taxModule.EMPLOYER_TAX_RATE * 100)}</span>
                 </div>
             </div>
@@ -507,10 +636,10 @@
      * Update the summary bar
      */
     function updateSummaryBar() {
-        const breakdown = state.taxModule.getFullBreakdown(
+        const breakdown = state.taxModule.getFullBreakdownWithExtras(
             state.grossIncome,
             state.isMonthly,
-            state.showEmployerTax
+            getExtrasOptions()
         );
 
         // Update widths
@@ -546,6 +675,13 @@
         // Set initial values from inputs
         state.maxIncome = parseFloat(elements.maxIncomeInput.value) || 100000;
         state.showEmployerTax = elements.employerTaxCheckbox.checked;
+        state.dailyFoodComp = parseFloat(elements.foodCompInput.value) || 7.96;
+        state.dailyCommuteComp = parseFloat(elements.commuteCompInput.value) || 5;
+        state.vacationDays = parseInt(elements.vacationDaysInput.value) || 20;
+        state.vacationAllowance = parseFloat(elements.vacationAllowanceInput.value) || 1854;
+        state.companyBonus = parseFloat(elements.companyBonusInput.value) || 1854;
+        state.showUntaxed = elements.showUntaxedCheckbox.checked;
+        elements.untaxedSettings.classList.toggle('disabled', !state.showUntaxed);
         state.grossIncome = Math.min(state.grossIncome, state.maxIncome);
 
         // Initial render
