@@ -401,3 +401,152 @@ describe('Tax2026 Monthly vs Yearly Consistency', () => {
         }
     });
 });
+
+// ============================================================================
+// Extra Relief Tests
+// ============================================================================
+
+describe('Tax2026 Extra Relief (calculateExtraRelief)', () => {
+    test('returns 0 with no options', () => {
+        assert.strictEqual(Tax2026.calculateExtraRelief(null, false), 0);
+        assert.strictEqual(Tax2026.calculateExtraRelief(undefined, false), 0);
+    });
+
+    test('returns 0 with empty options', () => {
+        assert.strictEqual(Tax2026.calculateExtraRelief({}, false), 0);
+    });
+
+    test('yearly relief for 1 child', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 1 }, false);
+        assert.strictEqual(round2(result), 2995.83);
+    });
+
+    test('yearly relief for 2 children', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 2 }, false);
+        assert.strictEqual(round2(result), round2(2995.83 + 3256.77));
+    });
+
+    test('yearly relief for 5 children', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 5 }, false);
+        const expected = 2995.83 + 3256.77 + 5432.02 + 7607.27 + 9782.51;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('yearly relief for 6 children (beyond 5th uses increment)', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 6 }, false);
+        const expected = 2995.83 + 3256.77 + 5432.02 + 7607.27 + 9782.51 + (9782.51 + 2175.25);
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('special needs adds flat amount per child', () => {
+        const withoutSpecial = Tax2026.calculateExtraRelief({ childrenCount: 2, specialNeedsCount: 0 }, false);
+        const with1Special = Tax2026.calculateExtraRelief({ childrenCount: 2, specialNeedsCount: 1 }, false);
+        assert.strictEqual(round2(with1Special - withoutSpecial), 7860.41);
+    });
+
+    test('special needs clamped to children count', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 1, specialNeedsCount: 5 }, false);
+        const expected = 2995.83 + 7860.41;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('children months proportionality', () => {
+        const full = Tax2026.calculateExtraRelief({ childrenCount: 2, childrenMonths: 12 }, false);
+        const half = Tax2026.calculateExtraRelief({ childrenCount: 2, childrenMonths: 6 }, false);
+        assert.strictEqual(round2(half), round2(full / 2));
+    });
+
+    test('children months zero means no children relief', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 2, childrenMonths: 0 }, false);
+        assert.strictEqual(result, 0);
+    });
+
+    test('student relief yearly', () => {
+        const result = Tax2026.calculateExtraRelief({ isStudent: true }, false);
+        assert.strictEqual(round2(result), 3886.35);
+    });
+
+    test('young adult relief yearly', () => {
+        const result = Tax2026.calculateExtraRelief({ isYoungAdult: true }, false);
+        assert.strictEqual(round2(result), 1443.50);
+    });
+
+    test('student takes priority over young adult', () => {
+        const result = Tax2026.calculateExtraRelief({ isStudent: true, isYoungAdult: true }, false);
+        assert.strictEqual(round2(result), 3886.35);
+    });
+
+    test('monthly relief for 1 child', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 1 }, true);
+        assert.strictEqual(round2(result), 249.65);
+    });
+
+    test('monthly student relief', () => {
+        const result = Tax2026.calculateExtraRelief({ isStudent: true }, true);
+        assert.strictEqual(round2(result), round2(3886.35 / 12));
+    });
+
+    test('combined children + student relief', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 2, isStudent: true }, false);
+        const expected = 2995.83 + 3256.77 + 3886.35;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('months proportionality does not affect student relief', () => {
+        const result = Tax2026.calculateExtraRelief({ childrenCount: 1, childrenMonths: 6, isStudent: true }, false);
+        const expected = 2995.83 / 2 + 3886.35;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+});
+
+// ============================================================================
+// Relief with Extra Options Tests
+// ============================================================================
+
+describe('Tax2026 Relief with Extra Options (calculateRelief)', () => {
+    test('relief without extra options unchanged', () => {
+        const basic = Tax2026.calculateRelief(48000, false);
+        const withEmpty = Tax2026.calculateRelief(48000, false, {});
+        assert.strictEqual(round2(basic), round2(withEmpty));
+    });
+
+    test('relief with children is higher than basic', () => {
+        const basic = Tax2026.calculateRelief(48000, false);
+        const withChildren = Tax2026.calculateRelief(48000, false, { childrenCount: 2 });
+        assert.ok(withChildren > basic);
+    });
+
+    test('relief capped at gross minus contributions', () => {
+        const gross = 1000;
+        const contributions = Tax2026.calculateContributions(gross, false);
+        const maxRelief = Math.max(0, gross - contributions);
+        const result = Tax2026.calculateRelief(gross, false, { childrenCount: 5, isStudent: true });
+        assert.ok(result <= maxRelief + 0.01, `Relief ${result} should not exceed ${maxRelief}`);
+    });
+
+    test('taxed income cannot go negative with extra relief', () => {
+        const gross = 5000;
+        const result = Tax2026.calculateTaxedIncome(gross, false, { childrenCount: 5, isStudent: true });
+        assert.ok(result >= 0);
+    });
+});
+
+// ============================================================================
+// Full Breakdown with Extra Relief Tests
+// ============================================================================
+
+describe('Tax2026 Full Breakdown with Extra Relief', () => {
+    test('getFullBreakdownWithExtras includes extra relief', () => {
+        const withoutExtras = Tax2026.getFullBreakdownWithExtras(48000, false, {});
+        const withExtras = Tax2026.getFullBreakdownWithExtras(48000, false, { childrenCount: 2 });
+        assert.ok(withExtras.relief > withoutExtras.relief);
+        assert.ok(withExtras.taxedIncome < withoutExtras.taxedIncome);
+        assert.ok(withExtras.incomeTax <= withoutExtras.incomeTax);
+    });
+
+    test('getFullBreakdownWithExtras with student relief', () => {
+        const without = Tax2026.getFullBreakdownWithExtras(48000, false, {});
+        const withStudent = Tax2026.getFullBreakdownWithExtras(48000, false, { isStudent: true });
+        assert.ok(withStudent.relief > without.relief);
+    });
+});

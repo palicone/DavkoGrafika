@@ -51,6 +51,20 @@ const Tax2026 = (function() {
         { min: 6862.19, max: Infinity, rate: 0.50 }
     ];
 
+    // Extra relief: children (yearly amounts for 1st through 5th child)
+    const CHILDREN_RELIEF_YEARLY = [2995.83, 3256.77, 5432.02, 7607.27, 9782.51];
+    const CHILDREN_RELIEF_INCREMENT_YEARLY = 2175.25;
+    const SPECIAL_NEEDS_YEARLY = 7860.41;
+
+    // Extra relief: children (monthly amounts for 1st through 5th child)
+    const CHILDREN_RELIEF_MONTHLY = [249.65, 271.40, 452.67, 633.94, 815.21];
+    const CHILDREN_RELIEF_INCREMENT_MONTHLY = 181.27;
+    const SPECIAL_NEEDS_MONTHLY = 655.03;
+
+    // Extra relief: young adult and student (yearly)
+    const YOUNG_ADULT_YEARLY = 1443.50;
+    const STUDENT_YEARLY = 3886.35;
+
     /**
      * Get the year this module is for
      */
@@ -71,13 +85,78 @@ const Tax2026 = (function() {
     }
 
     /**
-     * Calculate relief (olajsava)
+     * Calculate extra relief for children, students, and young adults
+     * @param {object} options - Extra relief options
+     * @param {number} options.childrenCount - Number of children
+     * @param {number} options.specialNeedsCount - Number of children with special needs
+     * @param {number} options.childrenMonths - Months of children relief (0-12)
+     * @param {boolean} options.isStudent - Whether the person is a student
+     * @param {boolean} options.isYoungAdult - Whether the person is a young adult (up to 29)
+     * @param {boolean} isMonthly - Whether calculation is monthly
+     * @returns {number} Extra relief amount
+     */
+    function calculateExtraRelief(options, isMonthly) {
+        if (!options) return 0;
+
+        const {
+            childrenCount = 0,
+            specialNeedsCount = 0,
+            childrenMonths = 12,
+            isStudent = false,
+            isYoungAdult = false
+        } = options;
+
+        const childrenAmounts = isMonthly ? CHILDREN_RELIEF_MONTHLY : CHILDREN_RELIEF_YEARLY;
+        const childrenIncrement = isMonthly ? CHILDREN_RELIEF_INCREMENT_MONTHLY : CHILDREN_RELIEF_INCREMENT_YEARLY;
+        const specialNeedsAmount = isMonthly ? SPECIAL_NEEDS_MONTHLY : SPECIAL_NEEDS_YEARLY;
+        const youngAdultAmount = isMonthly ? (YOUNG_ADULT_YEARLY / 12) : YOUNG_ADULT_YEARLY;
+        const studentAmount = isMonthly ? (STUDENT_YEARLY / 12) : STUDENT_YEARLY;
+
+        let extra = 0;
+
+        // Children relief
+        if (childrenCount > 0) {
+            let childrenRelief = 0;
+            for (let i = 0; i < childrenCount; i++) {
+                if (i < childrenAmounts.length) {
+                    childrenRelief += childrenAmounts[i];
+                } else {
+                    // Beyond 5th child: last defined + increment for each additional
+                    const beyondIndex = i - childrenAmounts.length + 1;
+                    childrenRelief += childrenAmounts[childrenAmounts.length - 1] + beyondIndex * childrenIncrement;
+                }
+            }
+
+            // Special needs additional (clamped to childrenCount)
+            const clampedSpecialNeeds = Math.min(specialNeedsCount, childrenCount);
+            childrenRelief += clampedSpecialNeeds * specialNeedsAmount;
+
+            // Proportional months
+            const monthsFactor = Math.max(0, Math.min(12, childrenMonths)) / 12;
+            childrenRelief *= monthsFactor;
+
+            extra += childrenRelief;
+        }
+
+        // Student relief (takes priority over young adult)
+        if (isStudent) {
+            extra += studentAmount;
+        } else if (isYoungAdult) {
+            extra += youngAdultAmount;
+        }
+
+        return extra;
+    }
+
+    /**
+     * Calculate relief (olajsava) including optional extra reliefs
      * Relief cannot exceed gross income minus contributions
      * @param {number} grossIncome - Gross income
      * @param {boolean} isMonthly - Whether calculation is monthly
+     * @param {object} [extraReliefOptions] - Optional extra relief options
      * @returns {number} Relief amount
      */
-    function calculateRelief(grossIncome, isMonthly) {
+    function calculateRelief(grossIncome, isMonthly, extraReliefOptions) {
         const relief = isMonthly ? RELIEF_MONTHLY : RELIEF_YEARLY;
 
         let reliefAmount;
@@ -87,6 +166,9 @@ const Tax2026 = (function() {
         } else {
             reliefAmount = relief.baseAmount;
         }
+
+        // Add extra reliefs
+        reliefAmount += calculateExtraRelief(extraReliefOptions, isMonthly);
 
         // Relief cannot exceed gross income minus contributions
         const contributions = calculateContributions(grossIncome, isMonthly);
@@ -154,11 +236,12 @@ const Tax2026 = (function() {
      * Calculate total income tax (dohodnina)
      * @param {number} grossIncome - Gross income
      * @param {boolean} isMonthly - Whether calculation is monthly
+     * @param {object} [extraReliefOptions] - Optional extra relief options
      * @returns {number} Total income tax
      */
-    function calculateTotalIncomeTax(grossIncome, isMonthly) {
+    function calculateTotalIncomeTax(grossIncome, isMonthly, extraReliefOptions) {
         const contributions = calculateContributions(grossIncome, isMonthly);
-        const relief = calculateRelief(grossIncome, isMonthly);
+        const relief = calculateRelief(grossIncome, isMonthly, extraReliefOptions);
         const taxedIncome = Math.max(0, grossIncome - contributions - relief);
 
         const brackets = isMonthly ? BRACKETS_MONTHLY : BRACKETS_YEARLY;
@@ -175,11 +258,12 @@ const Tax2026 = (function() {
      * Calculate taxed income (gross - contributions - relief)
      * @param {number} grossIncome - Gross income
      * @param {boolean} isMonthly - Whether calculation is monthly
+     * @param {object} [extraReliefOptions] - Optional extra relief options
      * @returns {number} Taxed income
      */
-    function calculateTaxedIncome(grossIncome, isMonthly) {
+    function calculateTaxedIncome(grossIncome, isMonthly, extraReliefOptions) {
         const contributions = calculateContributions(grossIncome, isMonthly);
-        const relief = calculateRelief(grossIncome, isMonthly);
+        const relief = calculateRelief(grossIncome, isMonthly, extraReliefOptions);
         return Math.max(0, grossIncome - contributions - relief);
     }
 
@@ -196,11 +280,12 @@ const Tax2026 = (function() {
      * Calculate net income
      * @param {number} grossIncome - Gross income
      * @param {boolean} isMonthly - Whether calculation is monthly
+     * @param {object} [extraReliefOptions] - Optional extra relief options
      * @returns {number} Net income
      */
-    function calculateNetIncome(grossIncome, isMonthly) {
+    function calculateNetIncome(grossIncome, isMonthly, extraReliefOptions) {
         const contributions = calculateContributions(grossIncome, isMonthly);
-        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly);
+        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly, extraReliefOptions);
         return grossIncome - contributions - incomeTax;
     }
 
@@ -211,11 +296,11 @@ const Tax2026 = (function() {
      * @param {boolean} includeEmployerTax - Whether to include employer tax
      * @returns {object} Complete breakdown
      */
-    function getFullBreakdown(grossIncome, isMonthly, includeEmployerTax) {
+    function getFullBreakdown(grossIncome, isMonthly, includeEmployerTax, extraReliefOptions) {
         const contributions = calculateContributions(grossIncome, isMonthly);
-        const relief = calculateRelief(grossIncome, isMonthly);
+        const relief = calculateRelief(grossIncome, isMonthly, extraReliefOptions);
         const taxedIncome = Math.max(0, grossIncome - contributions - relief);
-        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly);
+        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly, extraReliefOptions);
         const employerTax = includeEmployerTax ? calculateEmployerTax(grossIncome) : 0;
         const netIncome = grossIncome - contributions - incomeTax;
 
@@ -268,14 +353,21 @@ const Tax2026 = (function() {
             companyBonus = 0,
             dailyFoodComp = 0,
             dailyCommuteComp = 0,
-            vacationDays = 0
+            vacationDays = 0,
+            childrenCount = 0,
+            specialNeedsCount = 0,
+            childrenMonths = 12,
+            isStudent = false,
+            isYoungAdult = false
         } = options || {};
+
+        const extraReliefOptions = { childrenCount, specialNeedsCount, childrenMonths, isStudent, isYoungAdult };
 
         // Base breakdown (contributions from gross only determine taxed income)
         const contributions = calculateContributions(grossIncome, isMonthly);
-        const relief = calculateRelief(grossIncome, isMonthly);
+        const relief = calculateRelief(grossIncome, isMonthly, extraReliefOptions);
         const taxedIncome = Math.max(0, grossIncome - contributions - relief);
-        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly);
+        const incomeTax = calculateTotalIncomeTax(grossIncome, isMonthly, extraReliefOptions);
 
         const brackets = isMonthly ? BRACKETS_MONTHLY : BRACKETS_YEARLY;
         const bracketBreakdown = brackets.map((bracket, i) => ({
@@ -344,6 +436,7 @@ const Tax2026 = (function() {
     return {
         getYear,
         calculateContributions,
+        calculateExtraRelief,
         calculateRelief,
         getBracketCount,
         getBracketInfo,

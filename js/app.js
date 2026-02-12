@@ -1,5 +1,5 @@
 /**
- * Davko Grafika - Main Application
+ * Davkografika - Main Application
  * Slovenian Income Tax Visualization
  */
 (function() {
@@ -19,7 +19,12 @@
         vacationDays: 20,
         vacationAllowance: 1854,
         companyBonus: 1854,
-        showUntaxed: false
+        showUntaxed: false,
+        childrenCount: 2,
+        specialNeedsCount: 0,
+        childrenMonths: 12,
+        isStudent: false,
+        isYoungAdult: false
     };
 
     // DOM elements
@@ -52,7 +57,12 @@
         showUntaxedCheckbox: null,
         untaxedSettings: null,
         untaxedGrid: null,
-        yearSelect: null
+        yearSelect: null,
+        childrenCountInput: null,
+        specialNeedsInput: null,
+        childrenMonthsInput: null,
+        studentCheckbox: null,
+        youngAdultCheckbox: null
     };
 
     /**
@@ -71,7 +81,12 @@
                 vacationDays: state.vacationDays,
                 vacationAllowance: state.vacationAllowance,
                 companyBonus: state.companyBonus,
-                showUntaxed: state.showUntaxed
+                showUntaxed: state.showUntaxed,
+                childrenCount: state.childrenCount,
+                specialNeedsCount: state.specialNeedsCount,
+                childrenMonths: state.childrenMonths,
+                isStudent: state.isStudent,
+                isYoungAdult: state.isYoungAdult
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
@@ -105,6 +120,11 @@
             if (data.vacationDays != null) elements.vacationDaysInput.value = data.vacationDays;
             if (data.vacationAllowance != null) elements.vacationAllowanceInput.value = data.vacationAllowance;
             if (data.companyBonus != null) elements.companyBonusInput.value = data.companyBonus;
+            if (data.childrenCount != null) elements.childrenCountInput.value = data.childrenCount;
+            if (data.specialNeedsCount != null) elements.specialNeedsInput.value = data.specialNeedsCount;
+            if (data.childrenMonths != null) elements.childrenMonthsInput.value = data.childrenMonths;
+            if (data.isStudent != null) elements.studentCheckbox.checked = data.isStudent;
+            if (data.isYoungAdult != null) elements.youngAdultCheckbox.checked = data.isYoungAdult;
 
             // Restore toggle state
             if (data.isMonthly) {
@@ -121,6 +141,11 @@
             state.vacationDays = data.vacationDays ?? 20;
             state.vacationAllowance = data.vacationAllowance ?? 1854;
             state.companyBonus = data.companyBonus ?? 1854;
+            state.childrenCount = data.childrenCount ?? 2;
+            state.specialNeedsCount = Math.min(data.specialNeedsCount ?? 0, state.childrenCount);
+            state.childrenMonths = data.childrenMonths ?? 12;
+            state.isStudent = !!data.isStudent;
+            state.isYoungAdult = !!data.isYoungAdult;
 
             const maxInput = data.maxIncomeInput || 100000;
             state.maxIncome = state.isMonthly ? Math.round(maxInput / 12) : maxInput;
@@ -197,6 +222,11 @@
         elements.untaxedSettings = document.getElementById('untaxedSettings');
         elements.untaxedGrid = document.getElementById('untaxedGrid');
         elements.yearSelect = document.getElementById('yearSelect');
+        elements.childrenCountInput = document.getElementById('childrenCountInput');
+        elements.specialNeedsInput = document.getElementById('specialNeedsInput');
+        elements.childrenMonthsInput = document.getElementById('childrenMonthsInput');
+        elements.studentCheckbox = document.getElementById('studentCheckbox');
+        elements.youngAdultCheckbox = document.getElementById('youngAdultCheckbox');
     }
 
     /**
@@ -297,10 +327,55 @@
             updateVisualization();
         });
 
+        // Children count
+        elements.childrenCountInput.addEventListener('change', () => {
+            state.childrenCount = Math.max(0, parseInt(elements.childrenCountInput.value) || 0);
+            // Clamp special needs to children count
+            elements.specialNeedsInput.max = state.childrenCount;
+            if (state.specialNeedsCount > state.childrenCount) {
+                state.specialNeedsCount = state.childrenCount;
+                elements.specialNeedsInput.value = state.specialNeedsCount;
+            }
+            updateVisualization();
+        });
+
+        // Special needs count
+        elements.specialNeedsInput.addEventListener('change', () => {
+            state.specialNeedsCount = Math.max(0, Math.min(state.childrenCount, parseInt(elements.specialNeedsInput.value) || 0));
+            elements.specialNeedsInput.value = state.specialNeedsCount;
+            updateVisualization();
+        });
+
+        // Children months
+        elements.childrenMonthsInput.addEventListener('change', () => {
+            state.childrenMonths = Math.max(0, Math.min(12, parseInt(elements.childrenMonthsInput.value) || 0));
+            elements.childrenMonthsInput.value = state.childrenMonths;
+            updateVisualization();
+        });
+
+        // Student checkbox
+        elements.studentCheckbox.addEventListener('change', () => {
+            state.isStudent = elements.studentCheckbox.checked;
+            if (state.isStudent) {
+                state.isYoungAdult = false;
+                elements.youngAdultCheckbox.checked = false;
+                elements.youngAdultCheckbox.disabled = true;
+            } else {
+                elements.youngAdultCheckbox.disabled = false;
+            }
+            updateVisualization();
+        });
+
+        // Young adult checkbox
+        elements.youngAdultCheckbox.addEventListener('change', () => {
+            state.isYoungAdult = elements.youngAdultCheckbox.checked;
+            updateVisualization();
+        });
+
         // Share button
         elements.shareBtn.addEventListener('click', () => {
             const shareData = {
-                title: 'DavkoGrafika',
+                title: 'Davkografika',
                 url: 'https://davkografika.palic.si'
             };
             if (navigator.share) {
@@ -405,7 +480,12 @@
             companyBonus: state.showUntaxed ? state.companyBonus : 0,
             dailyFoodComp: state.showUntaxed ? state.dailyFoodComp : 0,
             dailyCommuteComp: state.showUntaxed ? state.dailyCommuteComp : 0,
-            vacationDays: state.showUntaxed ? state.vacationDays : 0
+            vacationDays: state.showUntaxed ? state.vacationDays : 0,
+            childrenCount: state.childrenCount,
+            specialNeedsCount: state.specialNeedsCount,
+            childrenMonths: state.childrenMonths,
+            isStudent: state.isStudent,
+            isYoungAdult: state.isYoungAdult
         };
     }
 
@@ -766,9 +846,18 @@
             state.vacationAllowance = parseFloat(elements.vacationAllowanceInput.value) || 1854;
             state.companyBonus = parseFloat(elements.companyBonusInput.value) || 1854;
             state.showUntaxed = elements.showUntaxedCheckbox.checked;
+            state.childrenCount = parseInt(elements.childrenCountInput.value) || 2;
+            state.specialNeedsCount = parseInt(elements.specialNeedsInput.value) || 0;
+            state.childrenMonths = parseInt(elements.childrenMonthsInput.value) || 12;
+            state.isStudent = elements.studentCheckbox.checked;
+            state.isYoungAdult = elements.youngAdultCheckbox.checked;
             state.grossIncome = Math.min(state.grossIncome, state.maxIncome);
         }
         elements.untaxedSettings.classList.toggle('disabled', !state.showUntaxed);
+        elements.specialNeedsInput.max = state.childrenCount;
+        if (state.isStudent) {
+            elements.youngAdultCheckbox.disabled = true;
+        }
 
         // Initial render
         updateVisualization();
@@ -804,6 +893,11 @@
                     reg.update();
                     if (navigator.serviceWorker.controller) {
                         navigator.serviceWorker.controller.postMessage('GET_VERSION');
+                    }
+                    // Also request version from active/waiting worker
+                    const sw = reg.active || reg.installing || reg.waiting;
+                    if (sw) {
+                        sw.postMessage('GET_VERSION');
                     }
                 })
                 .catch(err => console.log('Service Worker registration failed:', err));

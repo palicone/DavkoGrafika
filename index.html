@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#4a9c4a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Davko Grafika</title>
+    <title>Davkografika</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="img/icon.png">
     <link rel="apple-touch-icon" href="img/icon.png">
@@ -65,6 +65,32 @@
                         <span>Prikaži neobdavčeno</span>
                     </label>
                 </div>
+                <div class="setting-group">
+                    <label for="childrenCountInput">Število otrok</label>
+                    <input type="number" id="childrenCountInput" value="2" min="0" max="20" step="1">
+                </div>
+                <div class="setting-group">
+                    <label for="specialNeedsInput">Od tega s posebnimi potrebami</label>
+                    <input type="number" id="specialNeedsInput" value="0" min="0" max="2" step="1">
+                </div>
+                <div class="setting-group">
+                    <label for="childrenMonthsInput">Mesecev vzdrževanja otrok (0-12)</label>
+                    <input type="number" id="childrenMonthsInput" value="12" min="0" max="12" step="1">
+                    <span class="setting-info">Sorazmerni delež olajšave za otroke</span>
+                </div>
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="studentCheckbox">
+                        <span>Študent</span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="youngAdultCheckbox">
+                        <span>Mladi zaposleni (do 29 let)</span>
+                    </label>
+                    <span class="setting-info">Onemogočeno če je izbran študent</span>
+                </div>
                 <div id="untaxedSettings">
                     <div class="setting-group">
                         <label for="foodCompInput">Dnevno nadomestilo za prehrano (EUR)</label>
@@ -102,7 +128,7 @@
     <div id="app">
         <!-- Header with settings -->
         <header class="app-header">
-            <h1>Davko Grafika <span id="appVersion" class="app-version"></span></h1>
+            <h1>Davkografika <span id="appVersion" class="app-version"></span></h1>
             <div class="header-buttons">
                 <button id="shareBtn" class="icon-btn" title="Deli">
                     <svg viewBox="0 0 24 24" width="24" height="24">

@@ -419,3 +419,160 @@ describe('Tax2025 Monthly vs Yearly Consistency', () => {
         }
     });
 });
+
+// ============================================================================
+// Extra Relief Tests
+// ============================================================================
+
+describe('Tax2025 Extra Relief (calculateExtraRelief)', () => {
+    test('returns 0 with no options', () => {
+        assert.strictEqual(Tax2025.calculateExtraRelief(null, false), 0);
+        assert.strictEqual(Tax2025.calculateExtraRelief(undefined, false), 0);
+    });
+
+    test('returns 0 with empty options', () => {
+        assert.strictEqual(Tax2025.calculateExtraRelief({}, false), 0);
+    });
+
+    test('returns 0 with zero children', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 0 }, false);
+        assert.strictEqual(result, 0);
+    });
+
+    test('yearly relief for 1 child', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 1 }, false);
+        assert.strictEqual(round2(result), 2838.30);
+    });
+
+    test('yearly relief for 2 children', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 2 }, false);
+        assert.strictEqual(round2(result), round2(2838.30 + 3085.52));
+    });
+
+    test('yearly relief for 5 children', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 5 }, false);
+        const expected = 2838.30 + 3085.52 + 5146.39 + 7207.26 + 9268.12;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('yearly relief for 6 children (beyond 5th uses increment)', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 6 }, false);
+        const expected = 2838.30 + 3085.52 + 5146.39 + 7207.26 + 9268.12 + (9268.12 + 2060.97);
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('special needs adds flat amount per child', () => {
+        const withoutSpecial = Tax2025.calculateExtraRelief({ childrenCount: 2, specialNeedsCount: 0 }, false);
+        const with1Special = Tax2025.calculateExtraRelief({ childrenCount: 2, specialNeedsCount: 1 }, false);
+        assert.strictEqual(round2(with1Special - withoutSpecial), 7447.10);
+    });
+
+    test('special needs clamped to children count', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 1, specialNeedsCount: 5 }, false);
+        // Only 1 special needs counted (clamped to childrenCount=1)
+        const expected = 2838.30 + 7447.10;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('children months proportionality', () => {
+        const full = Tax2025.calculateExtraRelief({ childrenCount: 2, childrenMonths: 12 }, false);
+        const half = Tax2025.calculateExtraRelief({ childrenCount: 2, childrenMonths: 6 }, false);
+        assert.strictEqual(round2(half), round2(full / 2));
+    });
+
+    test('children months zero means no children relief', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 2, childrenMonths: 0 }, false);
+        assert.strictEqual(result, 0);
+    });
+
+    test('student relief yearly', () => {
+        const result = Tax2025.calculateExtraRelief({ isStudent: true }, false);
+        assert.strictEqual(round2(result), 3682.00);
+    });
+
+    test('young adult relief yearly', () => {
+        const result = Tax2025.calculateExtraRelief({ isYoungAdult: true }, false);
+        assert.strictEqual(round2(result), 1367.60);
+    });
+
+    test('student takes priority over young adult', () => {
+        const result = Tax2025.calculateExtraRelief({ isStudent: true, isYoungAdult: true }, false);
+        assert.strictEqual(round2(result), 3682.00);
+    });
+
+    test('monthly relief for 1 child', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 1 }, true);
+        assert.strictEqual(round2(result), 236.53);
+    });
+
+    test('monthly student relief', () => {
+        const result = Tax2025.calculateExtraRelief({ isStudent: true }, true);
+        assert.strictEqual(round2(result), round2(3682.00 / 12));
+    });
+
+    test('combined children + student relief', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 2, isStudent: true }, false);
+        const expected = 2838.30 + 3085.52 + 3682.00;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('months proportionality does not affect student relief', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 1, childrenMonths: 6, isStudent: true }, false);
+        // Children: half of 2838.30, student: full 3682.00
+        const expected = 2838.30 / 2 + 3682.00;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+});
+
+// ============================================================================
+// Relief with Extra Options Tests
+// ============================================================================
+
+describe('Tax2025 Relief with Extra Options (calculateRelief)', () => {
+    test('relief without extra options unchanged', () => {
+        const basic = Tax2025.calculateRelief(48000, false);
+        const withEmpty = Tax2025.calculateRelief(48000, false, {});
+        assert.strictEqual(round2(basic), round2(withEmpty));
+    });
+
+    test('relief with children is higher than basic', () => {
+        const basic = Tax2025.calculateRelief(48000, false);
+        const withChildren = Tax2025.calculateRelief(48000, false, { childrenCount: 2 });
+        assert.ok(withChildren > basic);
+    });
+
+    test('relief capped at gross minus contributions', () => {
+        // Very low income with lots of extra relief
+        const gross = 1000;
+        const contributions = Tax2025.calculateContributions(gross, false);
+        const maxRelief = Math.max(0, gross - contributions);
+        const result = Tax2025.calculateRelief(gross, false, { childrenCount: 5, isStudent: true });
+        assert.ok(result <= maxRelief + 0.01, `Relief ${result} should not exceed ${maxRelief}`);
+    });
+
+    test('taxed income cannot go negative with extra relief', () => {
+        const gross = 5000;
+        const result = Tax2025.calculateTaxedIncome(gross, false, { childrenCount: 5, isStudent: true });
+        assert.ok(result >= 0);
+    });
+});
+
+// ============================================================================
+// Full Breakdown with Extra Relief Tests
+// ============================================================================
+
+describe('Tax2025 Full Breakdown with Extra Relief', () => {
+    test('getFullBreakdownWithExtras includes extra relief', () => {
+        const withoutExtras = Tax2025.getFullBreakdownWithExtras(48000, false, {});
+        const withExtras = Tax2025.getFullBreakdownWithExtras(48000, false, { childrenCount: 2 });
+        assert.ok(withExtras.relief > withoutExtras.relief);
+        assert.ok(withExtras.taxedIncome < withoutExtras.taxedIncome);
+        assert.ok(withExtras.incomeTax <= withoutExtras.incomeTax);
+    });
+
+    test('getFullBreakdownWithExtras with student relief', () => {
+        const without = Tax2025.getFullBreakdownWithExtras(48000, false, {});
+        const withStudent = Tax2025.getFullBreakdownWithExtras(48000, false, { isStudent: true });
+        assert.ok(withStudent.relief > without.relief);
+    });
+});

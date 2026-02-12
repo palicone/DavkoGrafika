@@ -1,6 +1,6 @@
 {
-  "name": "Davko Grafika - Vizualizacija dohodnine",
-  "short_name": "Davko Grafika",
+  "name": "Davkografika - Vizualizacija dohodnine",
+  "short_name": "Davkografika",
   "description": "Vizualizacija davkov od dohodka v Sloveniji",
   "start_url": "./",
   "display": "standalone",
