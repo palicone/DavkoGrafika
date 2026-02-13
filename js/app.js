@@ -785,6 +785,9 @@
         elements.employerTaxGrid.style.height = `${employerTaxHeight}%`;
 
         elements.employerTaxGrid.innerHTML = `
+            <div class="fg-employer-cost-line">
+                <div class="fg-employer-cost-label">STROŠEK DELODAJALCA: ${formatEuro(breakdown.totalCost)}</div>
+            </div>
             <div class="fg-section" style="height: 100%;" data-height="${sizeClass}">
                 <div class="fg-section-full fg-contributions fg-employer-tax">
                     <span class="fg-section-center">PRISPEVKI DELODAJALCA ${formatEuro(breakdown.totalEmployerTax)}</span>

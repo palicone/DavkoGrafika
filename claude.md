@@ -118,6 +118,8 @@ Bars representing foreground net income are colored green.
   - Vertically spans from the bottom to the current gross income level and higher for the ammount of sum of all untaxed parts (vacation allowence, company bonus, food and commute compensations) and even higher if the employer tax is displayed
     - The foreground grid extends above the current gross income level to accommodate untaxed and the employer tax if selected for display
     - There must be space reserved above the configured maximum gross income to accommodate untaxed and the employer tax above the grid and below the total tax vs net income display
+    - If employer tax is configured for display the total employer cost tag is displayed at the top of the employer tax element as a line and a label in IndianRed color
+      - it slides with the top of the employer tax rectangle
   - Displays the untaxed part above the slider in the foreground tax color
   - Displays the social security contribution part below the slider in the foreground tax color
     - Spans the full width of the grid
@@ -205,7 +207,11 @@ Store answers to asked details in the AnsweredDetails.md
   - Setting for other supported family members count
     - default: 0
 
-# Update v9
+# Update v9 (13-Feb-2026)
 Minor changes
 - Social contributions percent dispaly
 - Employer tax percantage to 17.1%
+
+# Update v10 (13-Feb-2026)
+Employer full cost
+- shown when employer tax is configured to be displayed 
