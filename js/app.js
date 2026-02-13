@@ -23,6 +23,7 @@
         childrenCount: 2,
         specialNeedsCount: 0,
         childrenMonths: 12,
+        otherFamilyCount: 0,
         isStudent: false,
         isYoungAdult: false
     };
@@ -61,6 +62,7 @@
         childrenCountInput: null,
         specialNeedsInput: null,
         childrenMonthsInput: null,
+        otherFamilyInput: null,
         studentCheckbox: null,
         youngAdultCheckbox: null
     };
@@ -85,6 +87,7 @@
                 childrenCount: state.childrenCount,
                 specialNeedsCount: state.specialNeedsCount,
                 childrenMonths: state.childrenMonths,
+                otherFamilyCount: state.otherFamilyCount,
                 isStudent: state.isStudent,
                 isYoungAdult: state.isYoungAdult
             };
@@ -123,6 +126,7 @@
             if (data.childrenCount != null) elements.childrenCountInput.value = data.childrenCount;
             if (data.specialNeedsCount != null) elements.specialNeedsInput.value = data.specialNeedsCount;
             if (data.childrenMonths != null) elements.childrenMonthsInput.value = data.childrenMonths;
+            if (data.otherFamilyCount != null) elements.otherFamilyInput.value = data.otherFamilyCount;
             if (data.isStudent != null) elements.studentCheckbox.checked = data.isStudent;
             if (data.isYoungAdult != null) elements.youngAdultCheckbox.checked = data.isYoungAdult;
 
@@ -144,6 +148,7 @@
             state.childrenCount = data.childrenCount ?? 2;
             state.specialNeedsCount = Math.min(data.specialNeedsCount ?? 0, state.childrenCount);
             state.childrenMonths = data.childrenMonths ?? 12;
+            state.otherFamilyCount = data.otherFamilyCount ?? 0;
             state.isStudent = !!data.isStudent;
             state.isYoungAdult = !!data.isYoungAdult;
 
@@ -225,6 +230,7 @@
         elements.childrenCountInput = document.getElementById('childrenCountInput');
         elements.specialNeedsInput = document.getElementById('specialNeedsInput');
         elements.childrenMonthsInput = document.getElementById('childrenMonthsInput');
+        elements.otherFamilyInput = document.getElementById('otherFamilyInput');
         elements.studentCheckbox = document.getElementById('studentCheckbox');
         elements.youngAdultCheckbox = document.getElementById('youngAdultCheckbox');
     }
@@ -350,6 +356,12 @@
         elements.childrenMonthsInput.addEventListener('change', () => {
             state.childrenMonths = Math.max(0, Math.min(12, parseInt(elements.childrenMonthsInput.value) || 0));
             elements.childrenMonthsInput.value = state.childrenMonths;
+            updateVisualization();
+        });
+
+        // Other supported family members
+        elements.otherFamilyInput.addEventListener('change', () => {
+            state.otherFamilyCount = Math.max(0, parseInt(elements.otherFamilyInput.value) || 0);
             updateVisualization();
         });
 
@@ -484,6 +496,7 @@
             childrenCount: state.childrenCount,
             specialNeedsCount: state.specialNeedsCount,
             childrenMonths: state.childrenMonths,
+            otherFamilyCount: state.otherFamilyCount,
             isStudent: state.isStudent,
             isYoungAdult: state.isYoungAdult
         };
@@ -849,6 +862,7 @@
             state.childrenCount = parseInt(elements.childrenCountInput.value) || 2;
             state.specialNeedsCount = parseInt(elements.specialNeedsInput.value) || 0;
             state.childrenMonths = parseInt(elements.childrenMonthsInput.value) || 12;
+            state.otherFamilyCount = parseInt(elements.otherFamilyInput.value) || 0;
             state.isStudent = elements.studentCheckbox.checked;
             state.isYoungAdult = elements.youngAdultCheckbox.checked;
             state.grossIncome = Math.min(state.grossIncome, state.maxIncome);

@@ -2,7 +2,7 @@
  * Service Worker for Davkografika PWA
  */
 
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v8.1';
 const CACHE_NAME = 'davko-grafika-' + APP_VERSION;
 const ASSETS_TO_CACHE = [
     '/',

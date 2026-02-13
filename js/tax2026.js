@@ -61,6 +61,10 @@ const Tax2026 = (function() {
     const CHILDREN_RELIEF_INCREMENT_MONTHLY = 181.27;
     const SPECIAL_NEEDS_MONTHLY = 655.03;
 
+    // Extra relief: other supported family members
+    const OTHER_FAMILY_YEARLY = 2995.83;
+    const OTHER_FAMILY_MONTHLY = 249.65;
+
     // Extra relief: young adult and student (yearly)
     const YOUNG_ADULT_YEARLY = 1443.50;
     const STUDENT_YEARLY = 3886.35;
@@ -85,13 +89,14 @@ const Tax2026 = (function() {
     }
 
     /**
-     * Calculate extra relief for children, students, and young adults
+     * Calculate extra relief for children, students, young adults, and other family members
      * @param {object} options - Extra relief options
      * @param {number} options.childrenCount - Number of children
      * @param {number} options.specialNeedsCount - Number of children with special needs
      * @param {number} options.childrenMonths - Months of children relief (0-12)
      * @param {boolean} options.isStudent - Whether the person is a student
      * @param {boolean} options.isYoungAdult - Whether the person is a young adult (up to 29)
+     * @param {number} options.otherFamilyCount - Number of other supported family members
      * @param {boolean} isMonthly - Whether calculation is monthly
      * @returns {number} Extra relief amount
      */
@@ -103,7 +108,8 @@ const Tax2026 = (function() {
             specialNeedsCount = 0,
             childrenMonths = 12,
             isStudent = false,
-            isYoungAdult = false
+            isYoungAdult = false,
+            otherFamilyCount = 0
         } = options;
 
         const childrenAmounts = isMonthly ? CHILDREN_RELIEF_MONTHLY : CHILDREN_RELIEF_YEARLY;
@@ -111,6 +117,7 @@ const Tax2026 = (function() {
         const specialNeedsAmount = isMonthly ? SPECIAL_NEEDS_MONTHLY : SPECIAL_NEEDS_YEARLY;
         const youngAdultAmount = isMonthly ? (YOUNG_ADULT_YEARLY / 12) : YOUNG_ADULT_YEARLY;
         const studentAmount = isMonthly ? (STUDENT_YEARLY / 12) : STUDENT_YEARLY;
+        const otherFamilyAmount = isMonthly ? OTHER_FAMILY_MONTHLY : OTHER_FAMILY_YEARLY;
 
         let extra = 0;
 
@@ -136,6 +143,11 @@ const Tax2026 = (function() {
             childrenRelief *= monthsFactor;
 
             extra += childrenRelief;
+        }
+
+        // Other supported family members
+        if (otherFamilyCount > 0) {
+            extra += otherFamilyCount * otherFamilyAmount;
         }
 
         // Student relief (takes priority over young adult)
@@ -358,10 +370,11 @@ const Tax2026 = (function() {
             specialNeedsCount = 0,
             childrenMonths = 12,
             isStudent = false,
-            isYoungAdult = false
+            isYoungAdult = false,
+            otherFamilyCount = 0
         } = options || {};
 
-        const extraReliefOptions = { childrenCount, specialNeedsCount, childrenMonths, isStudent, isYoungAdult };
+        const extraReliefOptions = { childrenCount, specialNeedsCount, childrenMonths, isStudent, isYoungAdult, otherFamilyCount };
 
         // Base breakdown (contributions from gross only determine taxed income)
         const contributions = calculateContributions(grossIncome, isMonthly);

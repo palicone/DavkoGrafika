@@ -16,7 +16,7 @@ Company also pays food and commute to work and home compensation which are both 
 The income or gross income is what the employer pays the employee before any deductions.
 The net income is what the employee takes home after all deductions plus vacation allowence plus company bonus plus food and commute compensation.
 Employee contributions for taxed income determination (prispevki) are calculated based on gross income.
-The relief (olajsava) is calculated based on gross income, children count of whom some might have special needs, being an emplyed young adult or being a student.
+The relief (olajsava) is calculated based on gross income, children count of whom some might have special needs, other supported family mebers that are not childen, being an emplyed young adult or being a student.
 The taxed income is gross income minus employee contributions (without the part from the company bonus) minus relief.
 The income tax (dohodnina) is calculated based on the taxed income according to progressive brackets.
 The employer tax is calculated based on gross income plus employer contributions from company bonus.
@@ -157,7 +157,6 @@ Bars representing foreground net income are colored green.
 Store answers to asked details in the AnsweredDetails.md
 
 # Update v2 (8-Feb-2026)
-
 ## Minor changes
 - Share button on the top right before the settings button
   - Share link: davkografika.palic.si
@@ -184,19 +183,25 @@ Store answers to asked details in the AnsweredDetails.md
 - 2026
 
 # Update v8 (12-Feb-2026)
-- Extra relief factors
-  - Setting for having a number of childer
-    - default: 2
-  - Setting for how many of the children have special needs
-    - default: 0
-  - Setting for how many of of the months (0 .. 12) are children your relief
-    - defualt: 12
-    - only proportional ammount of the calculated children relief to months counts is a part in the final relief
-  - Setting for being a studnet:
-    - default: false
-  - Setting for being an employed young adult
-    - default: false
-    - disabled if being a student
+## Extra relief factors
+- Setting for having a number of childer
+  - default: 2
+- Setting for how many of the children have special needs
+  - default: 0
+- Setting for how many of of the months (0 .. 12) are children your relief
+  - defualt: 12
+  - only proportional ammount of the calculated children relief to months counts is a part in the final relief
+- Setting for being a studnet:
+  - default: false
+- Setting for being an employed young adult
+  - default: false
+  - disabled if being a student
 
-  - Add selected extra reliefes calculated to the basic relief
-    - take care to not substract more than available for the taxed income
+- Add selected extra reliefes calculated to the basic relief
+  - take care to not substract more than available for the taxed income
+
+# Update v8.1 (13-Feb-2026)
+- Extra relief factors for other supported family members
+  - Setting for other supported family members count
+    - default: 0
+

@@ -522,6 +522,43 @@ describe('Tax2025 Extra Relief (calculateExtraRelief)', () => {
         const expected = 2838.30 / 2 + 3682.00;
         assert.strictEqual(round2(result), round2(expected));
     });
+
+    test('yearly relief for 1 other family member', () => {
+        const result = Tax2025.calculateExtraRelief({ otherFamilyCount: 1 }, false);
+        assert.strictEqual(round2(result), 2838.30);
+    });
+
+    test('yearly relief for 3 other family members', () => {
+        const result = Tax2025.calculateExtraRelief({ otherFamilyCount: 3 }, false);
+        assert.strictEqual(round2(result), round2(2838.30 * 3));
+    });
+
+    test('monthly relief for 1 other family member', () => {
+        const result = Tax2025.calculateExtraRelief({ otherFamilyCount: 1 }, true);
+        assert.strictEqual(round2(result), 236.53);
+    });
+
+    test('monthly relief for 2 other family members', () => {
+        const result = Tax2025.calculateExtraRelief({ otherFamilyCount: 2 }, true);
+        assert.strictEqual(round2(result), round2(236.53 * 2));
+    });
+
+    test('other family members zero returns 0', () => {
+        const result = Tax2025.calculateExtraRelief({ otherFamilyCount: 0 }, false);
+        assert.strictEqual(result, 0);
+    });
+
+    test('combined children + other family members', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 2, otherFamilyCount: 1 }, false);
+        const expected = 2838.30 + 3085.52 + 2838.30;
+        assert.strictEqual(round2(result), round2(expected));
+    });
+
+    test('combined children + other family + student', () => {
+        const result = Tax2025.calculateExtraRelief({ childrenCount: 1, otherFamilyCount: 2, isStudent: true }, false);
+        const expected = 2838.30 + 2838.30 * 2 + 3682.00;
+        assert.strictEqual(round2(result), round2(expected));
+    });
 });
 
 // ============================================================================
@@ -541,12 +578,26 @@ describe('Tax2025 Relief with Extra Options (calculateRelief)', () => {
         assert.ok(withChildren > basic);
     });
 
+    test('relief with other family members is higher than basic', () => {
+        const basic = Tax2025.calculateRelief(48000, false);
+        const withFamily = Tax2025.calculateRelief(48000, false, { otherFamilyCount: 2 });
+        assert.ok(withFamily > basic);
+    });
+
     test('relief capped at gross minus contributions', () => {
         // Very low income with lots of extra relief
         const gross = 1000;
         const contributions = Tax2025.calculateContributions(gross, false);
         const maxRelief = Math.max(0, gross - contributions);
         const result = Tax2025.calculateRelief(gross, false, { childrenCount: 5, isStudent: true });
+        assert.ok(result <= maxRelief + 0.01, `Relief ${result} should not exceed ${maxRelief}`);
+    });
+
+    test('relief capped with other family members at low income', () => {
+        const gross = 1000;
+        const contributions = Tax2025.calculateContributions(gross, false);
+        const maxRelief = Math.max(0, gross - contributions);
+        const result = Tax2025.calculateRelief(gross, false, { otherFamilyCount: 10 });
         assert.ok(result <= maxRelief + 0.01, `Relief ${result} should not exceed ${maxRelief}`);
     });
 
