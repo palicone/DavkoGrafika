@@ -215,3 +215,6 @@ Minor changes
 # Update v10 (13-Feb-2026)
 Employer full cost
 - shown when employer tax is configured to be displayed 
+
+# Update v11 (13-Feb-2026)
+License

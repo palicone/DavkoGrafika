@@ -32,7 +32,10 @@
     const elements = {
         warningModal: null,
         settingsModal: null,
+        licenseModal: null,
         warningAcceptBtn: null,
+        licenseInfoBtn: null,
+        licenseCloseBtn: null,
         settingsBtn: null,
         settingsOkBtn: null,
         yearlyBtn: null,
@@ -200,7 +203,10 @@
     function initElements() {
         elements.warningModal = document.getElementById('warningModal');
         elements.settingsModal = document.getElementById('settingsModal');
+        elements.licenseModal = document.getElementById('licenseModal');
         elements.warningAcceptBtn = document.getElementById('warningAcceptBtn');
+        elements.licenseInfoBtn = document.getElementById('licenseInfoBtn');
+        elements.licenseCloseBtn = document.getElementById('licenseCloseBtn');
         elements.settingsBtn = document.getElementById('settingsBtn');
         elements.settingsOkBtn = document.getElementById('settingsOkBtn');
         elements.yearlyBtn = document.getElementById('yearlyBtn');
@@ -242,6 +248,14 @@
         // Warning modal
         elements.warningAcceptBtn.addEventListener('click', () => {
             elements.warningModal.classList.add('hidden');
+        });
+
+        // License modal
+        elements.licenseInfoBtn.addEventListener('click', () => {
+            elements.licenseModal.classList.remove('hidden');
+        });
+        elements.licenseCloseBtn.addEventListener('click', () => {
+            elements.licenseModal.classList.add('hidden');
         });
 
         // Settings modal
