@@ -23,7 +23,7 @@ describe('Tax2026 Constants', () => {
     });
 
     test('has correct employer tax rate', () => {
-        assert.strictEqual(Tax2026.EMPLOYER_TAX_RATE, 0.161);
+        assert.strictEqual(Tax2026.EMPLOYER_TAX_RATE, 0.171);
     });
 
     test('has correct work days', () => {
@@ -284,12 +284,12 @@ describe('Tax2026 Employer Tax (calculateEmployerTax)', () => {
 
     test('employer tax at 48000 EUR', () => {
         const result = Tax2026.calculateEmployerTax(48000);
-        assert.strictEqual(round2(result), round2(48000 * 0.161));
+        assert.strictEqual(round2(result), round2(48000 * 0.171));
     });
 
     test('employer tax at 100000 EUR', () => {
         const result = Tax2026.calculateEmployerTax(100000);
-        assert.strictEqual(round2(result), round2(100000 * 0.161));
+        assert.strictEqual(round2(result), round2(100000 * 0.171));
     });
 });
 

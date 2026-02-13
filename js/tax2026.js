@@ -11,8 +11,8 @@ const Tax2026 = (function() {
     // Fixed monthly contribution amount
     const FIXED_MONTHLY_CONTRIBUTION = 37.17;
 
-    // Employer tax rate (16.1%)
-    const EMPLOYER_TAX_RATE = 0.161;
+    // Employer tax rate (17.1%)
+    const EMPLOYER_TAX_RATE = 0.171;
 
     // Work days per year
     const WORK_DAYS = 254;

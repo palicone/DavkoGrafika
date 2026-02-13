@@ -636,8 +636,7 @@
             sections.push({
                 type: 'contributions',
                 height: breakdown.contributions,
-                amount: breakdown.totalContributions,
-                percent: breakdown.grossIncome > 0 ? (breakdown.totalContributions / breakdown.grossIncome) * 100 : 0
+                amount: breakdown.totalContributions
             });
         }
 
@@ -691,7 +690,7 @@
                     <div class="fg-section" style="height: ${heightPercent}%;" data-height="${sizeClass}">
                         <div class="fg-section-full fg-contributions">
                             <span class="fg-section-center">PRISPEVKI DELAVCA ${formatEuro(section.amount)}</span>
-                            <span class="fg-section-corner">${formatPercent(section.percent)}</span>
+                            <span class="fg-section-corner">${formatPercent(state.taxModule.CONTRIBUTION_RATE * 100)} + OBV. PRISP. ZDRAV.</span>
                         </div>
                     </div>
                 `;
